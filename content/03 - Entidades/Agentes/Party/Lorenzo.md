@@ -38,7 +38,7 @@ let COR = POD;
 
 // 🔗 función link correcta
 function link(text, section) {
-  return `[[Estadísticas de Entidades#${section}|${text}]]`;
+  return `[[Estadísticas de Agentes#${section}|${text}]]`;
 }
 
 // tabla
@@ -87,7 +87,7 @@ let medicina = 10 + ((DES + POD) / 4);
 
 // helper link
 function link(text, section) {
-  return `[[Estadísticas de Entidades#${section}|${text}]]`;
+  return `[[Estadísticas de Agentes#${section}|${text}]]`;
 }
 
 // tabla
@@ -105,10 +105,47 @@ dv.table(
 ]
 );
 ```
+ <!--STATS-START-->
+
+<table>
+<thead>
+<tr>
+  <th><a data-href="Estadísticas de Agentes#Constitución" href="Estadísticas de Agentes#Constitución" class="internal-link" target="_blank" rel="noopener">CON</a></th>
+  <th><a data-href="Estadísticas de Agentes#Fuerza" href="Estadísticas de Agentes#Fuerza" class="internal-link" target="_blank" rel="noopener">FUE</a></th>
+  <th><a data-href="Estadísticas de Agentes#Destreza" href="Estadísticas de Agentes#Destreza" class="internal-link" target="_blank" rel="noopener">DES</a></th>
+  <th><a data-href="Estadísticas de Agentes#Poder" href="Estadísticas de Agentes#Poder" class="internal-link" target="_blank" rel="noopener">POD</a></th>
+  <th><a data-href="Estadísticas de Agentes#Cognición" href="Estadísticas de Agentes#Cognición" class="internal-link" target="_blank" rel="noopener">COG</a></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>70</td>
+  <td>80</td>
+  <td>55</td>
+  <td>75</td>
+  <td>45</td>
+</tr>
+<tr>
+  <th><a data-href="Estadísticas de Agentes#Salud" href="Estadísticas de Agentes#Salud" class="internal-link" target="_blank" rel="noopener">HP</a></th>
+  <th><a data-href="Estadísticas de Agentes#Evasión" href="Estadísticas de Agentes#Evasión" class="internal-link" target="_blank" rel="noopener">EVA</a></th>
+  <th><a data-href="Estadísticas de Agentes#Movimiento" href="Estadísticas de Agentes#Movimiento" class="internal-link" target="_blank" rel="noopener">MOV</a></th>
+  <th><a data-href="Estadísticas de Agentes#PA" href="Estadísticas de Agentes#PA" class="internal-link" target="_blank" rel="noopener">PA</a></th>
+  <th><a data-href="Estadísticas de Agentes#Cordura" href="Estadísticas de Agentes#Cordura" class="internal-link" target="_blank" rel="noopener">COR</a></th>
+</tr>
+<tr>
+  <td>17</td>
+  <td>28</td>
+  <td>8</td>
+  <td>6</td>
+  <td>75</td>
+</tr>
+</tbody>
+</table>
+<!--STATS-END-->
 # Habilidades
-| Nombre            | Efecto                                                                                                                                                                    |                                                    Coste                                                    | CD  | Daño |                    Rango                    |                 Objetivo                  |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------: | :-: | :--: | :-----------------------------------------: | :---------------------------------------: |
-| Putiazo Aturdidor | Golpea al objetivo y este tendrá que superar una [[Dados#Tiradas de Estadísticas\|Tirada de Constitución]] o estará [[Estados#^catatonico\|Catatónico]] durante un turno. |                           2 [[Estadísticas de Agentes#Puntos de Acciones\|PA]]                            |  4  | 1D10 | [[Rangos y Áreas#^tabla-rangos\|Muy Cerca]] | [[Rangos y Áreas#^tabla-areas\|Objetivo]] |
+| Nombre            | Efecto                                                                                                                                                                    |                                                  Coste                                                  | CD  | Daño |                    Rango                    |                 Objetivo                  |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-----------------------------------------------------------------------------------------------------: | :-: | :--: | :-----------------------------------------: | :---------------------------------------: |
+| Putiazo Aturdidor | Golpea al objetivo y este tendrá que superar una [[Dados#Tiradas de Estadísticas\|Tirada de Constitución]] o estará [[Estados#^catatonico\|Catatónico]] durante un turno. |                          2 [[Estadísticas de Agentes#Puntos de Acciones\|PA]]                           |  4  | 1D10 | [[Rangos y Áreas#^tabla-rangos\|Muy Cerca]] | [[Rangos y Áreas#^tabla-areas\|Objetivo]] |
 | Marca             | [[Estados#^marcado\|Marca]] a un enemigo durante 3 turnos.                                                                                                                | 4 [[Estadísticas de Agentes#Puntos de Acciones\|PA]]<br>5 [[Estadísticas de Agentes#Cordura\|Cordura]]  |  5  |  -   |   [[Rangos y Áreas#^tabla-rangos\|Lejos]]   | [[Rangos y Áreas#^tabla-areas\|Objetivo]] |
 | Putiazo estados   | Golpea al objetivo y tira un dado de daño extra por cada estado que tenga el objetivo.                                                                                    | 6 [[Estadísticas de Agentes#Puntos de Acciones\|PA]]<br>10 [[Estadísticas de Agentes#Cordura\|Cordura]] |  8  | XD12 |   [[Rangos y Áreas#^tabla-rangos\|Cerca]]   | [[Rangos y Áreas#^tabla-areas\|Objetivo]] |
 [[04 - Narrativa/Personajes/Party/Lorenzo|Descripción]]
