@@ -6,6 +6,7 @@ POD: 65
 COG: 85
 ---
 # Estadísticas
+
 %% DATAVIEW_PUBLISHER: start
 ```dataviewjs
 let p = dv.current();
@@ -63,8 +64,10 @@ link("PA","Puntos de Acciones")
 ]
 );
 ```
-%% 
+%%
+<!-- do not edit -->
 %% DATAVIEW_PUBLISHER: end %%
+
 %% DATAVIEW_PUBLISHER: start
 ```dataviewjs
 
