@@ -7,7 +7,6 @@ COG: 85
 ---
 # Estadísticas
 
-%% DATAVIEW_PUBLISHER: start
 ```dataviewjs
 let p = dv.current();
 
@@ -64,11 +63,7 @@ link("PA","Puntos de Acciones")
 ]
 );
 ```
-%%
-<!-- do not edit -->
-%% DATAVIEW_PUBLISHER: end %%
 
-%% DATAVIEW_PUBLISHER: start
 ```dataviewjs
 
 let p = dv.current();
@@ -110,8 +105,6 @@ dv.table(
 ]
 );
 ```
-%% 
-%% DATAVIEW_PUBLISHER: end %%
 # Habilidades
 | Nombre          | Efecto                                                                                                                                                                                                        |                         Coste                          | CD  | Daño |                  Rango                  |                 Objetivo                  |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------: | :-: | :--: | :-------------------------------------: | :---------------------------------------: |
