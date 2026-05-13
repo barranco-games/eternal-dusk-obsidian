@@ -9,7 +9,7 @@
 Desbloqueo de caravana y primera vista del mapamundi (1 zona secundaria y primera zona)
 Cuando sales de la prisión en el mapamundi se para el viaje y te embosca el sectario de la luna. Lo vences y se te une.
 
-# Liberty City ()
+# Liberty City (Primer)
 
 - Sigues al Lider1 hasta aquí
 - Explorar la ciudad y encontrar información
