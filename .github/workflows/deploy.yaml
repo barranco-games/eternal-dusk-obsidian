@@ -1,4 +1,3 @@
-@'
 name: Deploy Quartz site to GitHub Pages
 
 on:
@@ -44,4 +43,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-'@ | Set-Content .github/workflows/deploy.yaml -Encoding UTF8
