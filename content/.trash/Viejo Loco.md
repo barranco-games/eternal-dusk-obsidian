@@ -1,0 +1,12 @@
+![Viejo|400x400](https://lh3.googleusercontent.com/d/1AfX278mi8Z5mfqXKY_I6K5TMEW053vYO)
+
+| [[Estadísticas de Entidades#Constitución\|Constitución]] |     [[Estadísticas de Entidades#Tamaño\|Tamaño]]     |     [[Estadísticas de Entidades#Fuerza\|Fuerza]]      | [[Estadísticas de Entidades#Destreza\|Destreza]] |             [[Estadísticas de Entidades#Poder\|Poder]]             | [[Estadísticas de Entidades#Inteligencia\|Inteligencia]]  |
+| :------------------------------------------------------: | :--------------------------------------------------: | :---------------------------------------------------: | :----------------------------------------------: | :----------------------------------------------------------------: | :-------------------------------------------------------: |
+|                            80                            |                          63                          |                          85                           |                        50                        |                                 60                                 |                            40                             |
+|         [[Estadísticas de Entidades#Vida\|Vida]]         | [[Estadísticas de Entidades#Movimiento\|Movimiento]] | [[Estadísticas de Entidades#Cordura / Maná\|Cordura]] |   [[Estadísticas de Entidades#Suerte\|Suerte]]   | [[Estadísticas de Entidades#Puntos de Acciones\|Puntos de Acción]] | [[Estadísticas de Entidades#Ganancia de PA\|Ganancia PA]] |
+|                            14                            |                          7m                          |                          50                           |                        3                         |                                 7                                  |                             1                             |
+# Habilidades
+
+| **Nombre**   | **Coste**                                              | **Daño** | **Cooldown** | **Rango**                               | **Área**                               |
+| ------------ | ------------------------------------------------------ | -------- | ------------ | --------------------------------------- | -------------------------------------- |
+| **Arrollar** | 2 [[Estadísticas de Entidades#Puntos de Acciones\|PA]] | 3D8      | 2 turnos     | [[Rangos y Áreas#^tabla-rangos\|Cerca]] | [[Rangos y Áreas#^tabla-areas\|Línea]] |

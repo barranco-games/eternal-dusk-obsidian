@@ -1,0 +1,8 @@
+[[Armas]]
+[[Cordura]]
+[[Dados]]
+[[Estadísticas de Entidades]]
+[[Estados]]
+[[Habilidades de Entidades]]
+[[Rangos y Áreas]]
+[[Turnos]]

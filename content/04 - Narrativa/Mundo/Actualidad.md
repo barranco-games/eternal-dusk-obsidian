@@ -1,0 +1,1 @@
+A causa de un experimento alquímico se crea un sol artificial, esto produce una reacción negativa en el mundo, el oro corrompe a los seres vivos de forma que pierden su cordura y sufren transformaciones.

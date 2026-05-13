@@ -1,0 +1,12 @@
+![Cowboy|400x400](https://lh3.googleusercontent.com/d/1VwPQMC-ug4pb2dtF4Ik-qMbCW_T_hXVF)
+
+| [[Estadísticas de Entidades#Constitución\|Constitución]] |     [[Estadísticas de Entidades#Tamaño\|Tamaño]]     |     [[Estadísticas de Entidades#Fuerza\|Fuerza]]      | [[Estadísticas de Entidades#Destreza\|Destreza]] |             [[Estadísticas de Entidades#Poder\|Poder]]             | [[Estadísticas de Entidades#Inteligencia\|Inteligencia]]  |
+| :------------------------------------------------------: | :--------------------------------------------------: | :---------------------------------------------------: | :----------------------------------------------: | :----------------------------------------------------------------: | :-------------------------------------------------------: |
+|                            55                            |                          70                          |                          60                           |                        80                        |                                 40                                 |                            40                             |
+|         [[Estadísticas de Entidades#Vida\|Vida]]         | [[Estadísticas de Entidades#Movimiento\|Movimiento]] | [[Estadísticas de Entidades#Cordura / Maná\|Cordura]] |   [[Estadísticas de Entidades#Suerte\|Suerte]]   | [[Estadísticas de Entidades#Puntos de Acciones\|Puntos de Acción]] | [[Estadísticas de Entidades#Ganancia de PA\|Ganancia PA]] |
+|                            12                            |                          6m                          |                          40                           |                        5                         |                                 8                                  |                             1                             |
+# Habilidades
+
+| **Nombre**       | **Coste**                                              | **Daño** | **Cooldown** | **Rango**                               | **Área**                                  |
+| ---------------- | ------------------------------------------------------ | -------- | ------------ | --------------------------------------- | ----------------------------------------- |
+| **Tiro Preciso** | 2 [[Estadísticas de Entidades#Puntos de Acciones\|PA]] | 4D6      | 3 turnos     | [[Rangos y Áreas#^tabla-rangos\|Lejos]] | [[Rangos y Áreas#^tabla-areas\|Objetivo]] |
