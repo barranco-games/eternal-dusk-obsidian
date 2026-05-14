@@ -17,8 +17,9 @@ COG: 80
 
 <!--SKILLS-START-->
 
+| **Característica** | **Valor** |
+|:---|:---:|
 | **[[Estadísticas de Agentes#^descubrir\|Descubrir]]** | 65 |
-|:---:|:---:|
 | **[[Estadísticas de Agentes#^sigilo\|Sigilo]]** | 52 |
 | **[[Estadísticas de Agentes#^ocultismo\|Ocultismo]]** | 32 |
 | **[[Estadísticas de Agentes#^lanzar\|Lanzar]]** | 45 |

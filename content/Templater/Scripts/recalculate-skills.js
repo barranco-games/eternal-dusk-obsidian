@@ -27,8 +27,9 @@ module.exports = async () => {
         `**[[Estadísticas de Agentes#${section}__PIPE__${label}]]**`;
 
     const table = `
+| **Característica** | **Valor** |
+|:---|:---:|
 | ${link("^descubrir","Descubrir")} | ${descubrir} |
-|:---:|:---:|
 | ${link("^sigilo","Sigilo")} | ${sigilo} |
 | ${link("^ocultismo","Ocultismo")} | ${ocultismo} |
 | ${link("^lanzar","Lanzar")} | ${lanzar} |

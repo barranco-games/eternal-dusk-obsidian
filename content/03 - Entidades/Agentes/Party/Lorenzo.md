@@ -17,15 +17,16 @@ COG: 45
 
 <!--SKILLS-START-->
 
-|   **[[Estadísticas de Agentes#^descubrir\|Descubrir]]**   | 47  |
-| :-------------------------------------------------------: | :-: |
-|      **[[Estadísticas de Agentes#^sigilo\|Sigilo]]**      | 47  |
-|   **[[Estadísticas de Agentes#^ocultismo\|Ocultismo]]**   | 42  |
-|      **[[Estadísticas de Agentes#^lanzar\|Lanzar]]**      | 60  |
-|   **[[Estadísticas de Agentes#^intimidar\|Intimidar]]**   | 53  |
-| **[[Estadísticas de Agentes#^subterfugio\|Subterfugio]]** | 40  |
-| **[[Estadísticas de Agentes#^perspicacia\|Perspicacia]]** | 35  |
-|    **[[Estadísticas de Agentes#^medicina\|Medicina]]**    | 42  |
+| **Característica** | **Valor** |
+|:---|:---:|
+| **[[Estadísticas de Agentes#^descubrir\|Descubrir]]** | 47 |
+| **[[Estadísticas de Agentes#^sigilo\|Sigilo]]** | 47 |
+| **[[Estadísticas de Agentes#^ocultismo\|Ocultismo]]** | 42 |
+| **[[Estadísticas de Agentes#^lanzar\|Lanzar]]** | 60 |
+| **[[Estadísticas de Agentes#^intimidar\|Intimidar]]** | 53 |
+| **[[Estadísticas de Agentes#^subterfugio\|Subterfugio]]** | 40 |
+| **[[Estadísticas de Agentes#^perspicacia\|Perspicacia]]** | 35 |
+| **[[Estadísticas de Agentes#^medicina\|Medicina]]** | 42 |
 <!--SKILLS-END-->
 
 ## [[04 - Narrativa/Personajes/Party/Lorenzo|Descripción]]
