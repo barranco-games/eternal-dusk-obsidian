@@ -1,10 +1,5 @@
-document.addEventListener("DOMContentLoaded", () => {
-  startObserver()
-})
-
-document.addEventListener("nav", () => {
-  startObserver()
-})
+document.addEventListener("DOMContentLoaded", () => { startObserver() })
+document.addEventListener("nav", () => { startObserver() })
 
 function startObserver() {
   const observer = new MutationObserver((mutations) => {
@@ -12,29 +7,26 @@ function startObserver() {
       for (const node of mutation.addedNodes) {
         if (node.nodeType !== 1) continue
         const el = node
-        console.log("Node added:", el.className, el.id)
         if (!el.classList?.contains("popover")) continue
 
-        console.log("Popover detected:", el.id)
-
         const inner = el.querySelector(".popover-inner")
-        console.log("Inner:", inner)
-
         const hash = getHashForPopover(el)
-        console.log("Hash:", hash)
-
         if (!hash || !inner) continue
 
         setTimeout(() => {
+          // decode the hash in case it's URL-encoded
+          const decodedHash = decodeURIComponent(hash)
           const target =
-            inner.querySelector(`#popover-internal-${CSS.escape(hash)}`) ||
-            inner.querySelector(`[id="popover-internal-${hash}"]`)
-          console.log("Target:", target)
+            inner.querySelector(`#popover-internal-${CSS.escape(decodedHash)}`) ||
+            inner.querySelector(`[id="popover-internal-${decodedHash}"]`)
+
           if (target) {
-            console.log("Scrolling to:", target.id, "offsetTop:", target.offsetTop)
+            // scroll the popover-inner container
+            target.scrollIntoView({ block: "start" })
+            // also try direct scrollTop as fallback
             inner.scrollTop = target.offsetTop
           }
-        }, 50)
+        }, 100)
       }
     }
   })
@@ -45,9 +37,7 @@ function startObserver() {
 function getHashForPopover(popoverEl) {
   const popoverId = popoverEl.id
   const slug = popoverId.replace(/^popover-/, "")
-  console.log("Looking for link with slug:", slug)
   const link = document.querySelector(`a.internal[href*="${slug}"]`)
-  console.log("Found link:", link?.href)
   if (!link) return null
   const url = new URL(link.href)
   return url.hash?.slice(1) || null
