@@ -13,20 +13,8 @@ function startObserver() {
         const hash = getHashForPopover(el)
         if (!hash || !inner) continue
 
-        setTimeout(() => {
-          // decode the hash in case it's URL-encoded
-          const decodedHash = decodeURIComponent(hash)
-          const target =
-            inner.querySelector(`#popover-internal-${CSS.escape(decodedHash)}`) ||
-            inner.querySelector(`[id="popover-internal-${decodedHash}"]`)
-
-          if (target) {
-            // scroll the popover-inner container
-            target.scrollIntoView({ block: "start" })
-            // also try direct scrollTop as fallback
-            inner.scrollTop = target.offsetTop
-          }
-        }, 100)
+        // try multiple times as content loads asynchronously
+        attemptScroll(inner, hash, 0)
       }
     }
   })
@@ -34,11 +22,35 @@ function startObserver() {
   observer.observe(document.body, { childList: true, subtree: true })
 }
 
+function attemptScroll(inner, hash, attempt) {
+  if (attempt > 5) return
+  setTimeout(() => {
+    const decodedHash = decodeURIComponent(hash)
+    const target =
+      inner.querySelector(`#popover-internal-${CSS.escape(decodedHash)}`) ||
+      inner.querySelector(`[id="popover-internal-${decodedHash}"]`)
+
+    if (target) {
+      inner.scrollTop = target.offsetTop
+    } else {
+      attemptScroll(inner, hash, attempt + 1)
+    }
+  }, 100 * (attempt + 1))
+}
+
 function getHashForPopover(popoverEl) {
   const popoverId = popoverEl.id
-  const slug = popoverId.replace(/^popover-/, "")
-  const link = document.querySelector(`a.internal[href*="${slug}"]`)
-  if (!link) return null
-  const url = new URL(link.href)
-  return url.hash?.slice(1) || null
+  // decode the slug from the popover id since it may be URL-encoded
+  const slug = decodeURIComponent(popoverId.replace(/^popover-/, ""))
+
+  // find matching link by decoding both sides
+  const links = document.querySelectorAll("a.internal")
+  for (const link of links) {
+    const decoded = decodeURIComponent(link.href)
+    if (decoded.includes(slug)) {
+      const url = new URL(link.href)
+      return url.hash?.slice(1) || null
+    }
+  }
+  return null
 }
