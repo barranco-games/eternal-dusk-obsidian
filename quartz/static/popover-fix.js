@@ -9,12 +9,10 @@ function startObserver() {
         const el = node
         if (!el.classList?.contains("popover")) continue
 
-        const inner = el.querySelector(".popover-inner")
         const hash = getHashForPopover(el)
-        if (!hash || !inner) continue
+        if (!hash) continue
 
-        // try multiple times as content loads asynchronously
-        attemptScroll(inner, hash, 0)
+        attemptScroll(el, hash, 0)
       }
     }
   })
@@ -22,28 +20,37 @@ function startObserver() {
   observer.observe(document.body, { childList: true, subtree: true })
 }
 
-function attemptScroll(inner, hash, attempt) {
-  if (attempt > 5) return
+function attemptScroll(popoverEl, hash, attempt) {
+  if (attempt > 8) return
   setTimeout(() => {
     const decodedHash = decodeURIComponent(hash)
-    const target =
-      inner.querySelector(`#popover-internal-${CSS.escape(decodedHash)}`) ||
-      inner.querySelector(`[id="popover-internal-${decodedHash}"]`)
+
+    // try all possible scrollable containers
+    const containers = [
+      popoverEl.querySelector(".popover-inner"),
+      popoverEl.querySelector(".popover-content"),
+      popoverEl,
+    ].filter(Boolean)
+
+    const target = popoverEl.querySelector(`#popover-internal-${CSS.escape(decodedHash)}`) ||
+                   popoverEl.querySelector(`[id="popover-internal-${decodedHash}"]`)
 
     if (target) {
-      inner.scrollTop = target.offsetTop
+      // try scrolling every possible container
+      for (const container of containers) {
+        container.scrollTop = target.offsetTop
+      }
+      // also try scrollIntoView as last resort
+      target.scrollIntoView({ block: "start", behavior: "instant" })
     } else {
-      attemptScroll(inner, hash, attempt + 1)
+      attemptScroll(popoverEl, hash, attempt + 1)
     }
-  }, 100 * (attempt + 1))
+  }, 150 * (attempt + 1))
 }
 
 function getHashForPopover(popoverEl) {
   const popoverId = popoverEl.id
-  // decode the slug from the popover id since it may be URL-encoded
   const slug = decodeURIComponent(popoverId.replace(/^popover-/, ""))
-
-  // find matching link by decoding both sides
   const links = document.querySelectorAll("a.internal")
   for (const link of links) {
     const decoded = decodeURIComponent(link.href)
