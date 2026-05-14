@@ -28,6 +28,7 @@ COG: 45
 |    **[[Estadísticas de Agentes#^medicina\|Medicina]]**    | 42  |
 <!--SKILLS-END-->
 
+## [[04 - Narrativa/Personajes/Party/Lorenzo|Descripción]]
 # Habilidades
 | Nombre            | Efecto                                                                                                                                                                    |                                                  Coste                                                  | CD  | Daño |                    Rango                    |                 Objetivo                  |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-----------------------------------------------------------------------------------------------------: | :-: | :--: | :-----------------------------------------: | :---------------------------------------: |
@@ -35,6 +36,5 @@ COG: 45
 | Marca             | [[Estados#^marcado\|Marca]] a un enemigo durante 3 turnos.                                                                                                                | 4 [[Estadísticas de Agentes#Puntos de Acciones\|PA]]<br>5 [[Estadísticas de Agentes#Cordura\|Cordura]]  |  5  |  -   |   [[Rangos y Áreas#^tabla-rangos\|Lejos]]   | [[Rangos y Áreas#^tabla-areas\|Objetivo]] |
 | Putiazo estados   | Golpea al objetivo y tira un dado de daño extra por cada estado que tenga el objetivo.                                                                                    | 6 [[Estadísticas de Agentes#Puntos de Acciones\|PA]]<br>10 [[Estadísticas de Agentes#Cordura\|Cordura]] |  8  | XD12 |   [[Rangos y Áreas#^tabla-rangos\|Cerca]]   | [[Rangos y Áreas#^tabla-areas\|Objetivo]] |
 
-[[04 - Narrativa/Personajes/Party/Lorenzo|Descripción]]
 
 

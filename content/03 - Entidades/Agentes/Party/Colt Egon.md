@@ -28,12 +28,13 @@ COG: 85
 | **[[Estadísticas de Agentes#^medicina\|Medicina]]** | 45 |
 <!--SKILLS-END-->
 
+## [[04 - Narrativa/Personajes/Party/Colt Egon|Descripción]]
 # Habilidades
-| Nombre          | Efecto                                                                                                                                                                                                        |                         Coste                          | CD  | Daño |                  Rango                  |                 Objetivo                  |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------: | :-: | :--: | :-------------------------------------: | :---------------------------------------: |
-| **Turno extra** | Da al aliado seleccionado un turno adicional al final de su siguiente turno.                                                                                                                                  | 4 [[Estadísticas de Agentes#Puntos de Acciones\|PA]] |  4  |  -   | [[Rangos y Áreas#^tabla-rangos\|Cerca]] | [[Rangos y Áreas#^tabla-areas\|Objetivo]] |
+| Nombre          | Efecto                                                                                                                                                                                                      |                        Coste                         | CD  | Daño |                  Rango                  |                 Objetivo                  |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------: | :-: | :--: | :-------------------------------------: | :---------------------------------------: |
+| **Turno extra** | Da al aliado seleccionado un turno adicional al final de su siguiente turno.                                                                                                                                | 4 [[Estadísticas de Agentes#Puntos de Acciones\|PA]] |  4  |  -   | [[Rangos y Áreas#^tabla-rangos\|Cerca]] | [[Rangos y Áreas#^tabla-areas\|Objetivo]] |
 | Tiro Veneno     | El objetivo tendrá que hacer una [[Estadísticas de Agentes#Constitución\|Tirada de Constitución]] o será [[Estados#^veneno\|Envenenado]] durante dos turnos.                                                | 2 [[Estadísticas de Agentes#Puntos de Acciones\|PA]] |  2  | 1D10 | [[Rangos y Áreas#^tabla-rangos\|Lejos]] | [[Rangos y Áreas#^tabla-areas\|Objetivo]] |
 | Gas Pimienta    | Los objetivos que se encuentren en el cono tendrán que hacer una [[Estadísticas de Agentes#Constitución\|Tirada de Destreza]] o recibirá el daño y tendrá [[Estados#^temblor\|Temblores]] durante un turno. | 2 [[Estadísticas de Agentes#Puntos de Acciones\|PA]] |  3  | 1D6  | [[Rangos y Áreas#^tabla-rangos\|Medio]] |   [[Rangos y Áreas#^tabla-areas\|Cono]]   |
-[[04 - Narrativa/Personajes/Party/Colt Egon|Descripción]]
+
 
 
