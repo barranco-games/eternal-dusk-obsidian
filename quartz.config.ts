@@ -16,7 +16,7 @@ const config: QuartzConfig = {
       provider: "plausible",
     },
     locale: "en-US",
-    baseUrl: "quartz.jzhao.xyz",
+    baseUrl: "barranco-games.github.io/eternal-dusk-obsidian",
     ignorePatterns: ["private", "templates", ".obsidian","Plantillas/**", ".trash/**"],
     defaultDateType: "modified",
     theme: {

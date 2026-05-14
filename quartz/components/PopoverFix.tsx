@@ -1,8 +1,10 @@
 import { QuartzComponent, QuartzComponentProps } from "./types"
+import { pathToRoot } from "../util/path"
 
 const PopoverFix: () => QuartzComponent = () => {
-  const PopoverFixComponent: QuartzComponent = (_props: QuartzComponentProps) => {
-    return <script src="/static/popover-fix.js" defer></script>
+  const PopoverFixComponent: QuartzComponent = ({ fileData }: QuartzComponentProps) => {
+    const base = pathToRoot(fileData.slug!)
+    return <script src={`${base}/static/popover-fix.js`} defer></script>
   }
   return PopoverFixComponent
 }
