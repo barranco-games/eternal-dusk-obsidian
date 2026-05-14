@@ -9,7 +9,6 @@ document.addEventListener("nav", () => {
 function patchPopovers() {
   document.querySelectorAll("a.internal").forEach((link) => {
     link.addEventListener("mouseenter", () => {
-      // give quartz time to render the popover
       setTimeout(() => {
         const popover = link.querySelector(".popover")
         if (!popover) return
@@ -21,13 +20,13 @@ function patchPopovers() {
         const inner = popover.querySelector(".popover-inner")
         if (!inner) return
 
-        // find the anchor target inside the popover
+        // quartz prefixes ids with "popover-internal-" inside popovers
         const target =
-          inner.querySelector(`#${CSS.escape(hash)}`) ||
-          inner.querySelector(`[id="${hash}"]`)
+          inner.querySelector(`#popover-internal-${CSS.escape(hash)}`) ||
+          inner.querySelector(`#${CSS.escape(hash)}`)
 
         if (target) {
-          target.scrollIntoView({ block: "start" })
+          inner.scrollTop = target.offsetTop
         }
       }, 50)
     })
