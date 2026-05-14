@@ -24,32 +24,26 @@ module.exports = async () => {
     const medicina     = Math.floor(10 + ((DES + POD) / 4));
 
     const link = (section, label) =>
-        `<a data-href="Estadísticas de Agentes#${section}" href="Estadísticas de Agentes#${section}" class="internal-link" target="_blank" rel="noopener">${label}</a>`;
-
-    const row = (section, label, value) => `
-<tr>
-  <td style="padding: 6px 12px; border: 1px solid var(--background-modifier-border); text-align: center;">${link(section, label)}</td>
-  <td style="padding: 6px 12px; border: 1px solid var(--background-modifier-border); text-align: center;">${value}</td>
-</tr>`;
+        `**[[Estadísticas de Agentes#${section}__PIPE__${label}]]**`;
 
     const table = `
-<table style="border-collapse: collapse; width: 100%; border: 1px solid var(--background-modifier-border);">
-<tbody>
-${row("^descubrir",   "Descubrir",   descubrir)}
-${row("^sigilo",      "Sigilo",      sigilo)}
-${row("^ocultismo",   "Ocultismo",   ocultismo)}
-${row("^lanzar",      "Lanzar",      lanzar)}
-${row("^intimidar",   "Intimidar",   intimidar)}
-${row("subterfugio",  "Subterfugio", subterfugio)}
-${row("Perspicacia",  "Perspicacia", perspicacia)}
-${row("Medicina",     "Medicina",    medicina)}
-</tbody>
-</table>`;
+| ${link("^descubrir","Descubrir")} | ${descubrir} |
+|:---:|:---:|
+| ${link("^sigilo","Sigilo")} | ${sigilo} |
+| ${link("^ocultismo","Ocultismo")} | ${ocultismo} |
+| ${link("^lanzar","Lanzar")} | ${lanzar} |
+| ${link("^intimidar","Intimidar")} | ${intimidar} |
+| ${link("^subterfugio","Subterfugio")} | ${subterfugio} |
+| ${link("^perspicacia","Perspicacia")} | ${perspicacia} |
+| ${link("^medicina","Medicina")} | ${medicina} |
+`;
 
-    const newContent = content.replace(
-        /<!--SKILLS-START-->[\s\S]*?<!--SKILLS-END-->/,
-        `<!--SKILLS-START-->${table}<!--SKILLS-END-->`
-    );
+    const newContent = content
+        .replace(
+            /<!--SKILLS-START-->[\s\S]*?<!--SKILLS-END-->/,
+            `<!--SKILLS-START-->\n${table}<!--SKILLS-END-->`
+        )
+        .replace(/__PIPE__/g, "\\|");
 
     await app.vault.modify(file, newContent);
 };

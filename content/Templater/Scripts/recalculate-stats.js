@@ -32,48 +32,22 @@ module.exports = async () => {
     const COR = POD;
 
     const link = (section, label) =>
-        `<a data-href="Estadísticas de Agentes#${section}" href="Estadísticas de Agentes#${section}" class="internal-link" target="_blank" rel="noopener">${label}</a>`;
+        `**[[Estadísticas de Agentes#${section}__PIPE__${label}]]**`;
 
     const table = `
-<table style="border-collapse: collapse; width: 100%; border: 1px solid var(--background-modifier-border);">
-<thead>
-<tr>
-  <th style="padding: 6px 12px; border: 1px solid var(--background-modifier-border); text-align: center;">${link("Constitución","CON")}</th>
-  <th style="padding: 6px 12px; border: 1px solid var(--background-modifier-border); text-align: center;">${link("Fuerza","FUE")}</th>
-  <th style="padding: 6px 12px; border: 1px solid var(--background-modifier-border); text-align: center;">${link("Destreza","DES")}</th>
-  <th style="padding: 6px 12px; border: 1px solid var(--background-modifier-border); text-align: center;">${link("Poder","POD")}</th>
-  <th style="padding: 6px 12px; border: 1px solid var(--background-modifier-border); text-align: center;">${link("Cognición","COG")}</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-  <td style="padding: 6px 12px; border: 1px solid var(--background-modifier-border); text-align: center;">${CON}</td>
-  <td style="padding: 6px 12px; border: 1px solid var(--background-modifier-border); text-align: center;">${FUE}</td>
-  <td style="padding: 6px 12px; border: 1px solid var(--background-modifier-border); text-align: center;">${DES}</td>
-  <td style="padding: 6px 12px; border: 1px solid var(--background-modifier-border); text-align: center;">${POD}</td>
-  <td style="padding: 6px 12px; border: 1px solid var(--background-modifier-border); text-align: center;">${COG}</td>
-</tr>
-<tr>
-  <th style="padding: 6px 12px; border: 1px solid var(--background-modifier-border); text-align: center;">${link("Salud","HP")}</th>
-  <th style="padding: 6px 12px; border: 1px solid var(--background-modifier-border); text-align: center;">${link("Evasión","EVA")}</th>
-  <th style="padding: 6px 12px; border: 1px solid var(--background-modifier-border); text-align: center;">${link("Movimiento","MOV")}</th>
-  <th style="padding: 6px 12px; border: 1px solid var(--background-modifier-border); text-align: center;">${link("PA","PA")}</th>
-  <th style="padding: 6px 12px; border: 1px solid var(--background-modifier-border); text-align: center;">${link("Cordura","COR")}</th>
-</tr>
-<tr>
-  <td style="padding: 6px 12px; border: 1px solid var(--background-modifier-border); text-align: center;">${HP}</td>
-  <td style="padding: 6px 12px; border: 1px solid var(--background-modifier-border); text-align: center;">${EVA}</td>
-  <td style="padding: 6px 12px; border: 1px solid var(--background-modifier-border); text-align: center;">${MOV}</td>
-  <td style="padding: 6px 12px; border: 1px solid var(--background-modifier-border); text-align: center;">${PA}</td>
-  <td style="padding: 6px 12px; border: 1px solid var(--background-modifier-border); text-align: center;">${COR}</td>
-</tr>
-</tbody>
-</table>`;
+| ${link("Constitución","CON")} | ${link("Fuerza","FUE")} | ${link("Destreza","DES")} | ${link("Poder","POD")} | ${link("Cognición","COG")} |
+|:---:|:---:|:---:|:---:|:---:|
+| ${CON} | ${FUE} | ${DES} | ${POD} | ${COG} |
+| ${link("Salud","HP")} | ${link("Evasión","EVA")} | ${link("Movimiento","MOV")} | ${link("PA","PA")} | ${link("Cordura","COR")} |
+| ${HP} | ${EVA} | ${MOV} | ${PA} | ${COR} |
+`;
 
-    const newContent = content.replace(
-        /<!--STATS-START-->[\s\S]*?<!--STATS-END-->/,
-        `<!--STATS-START-->${table}\n<!--STATS-END-->`
-    );
+    const newContent = content
+        .replace(
+            /<!--STATS-START-->[\s\S]*?<!--STATS-END-->/,
+            `<!--STATS-START-->\n${table}<!--STATS-END-->`
+        )
+        .replace(/__PIPE__/g, "\\|");
 
     await app.vault.modify(file, newContent);
 };

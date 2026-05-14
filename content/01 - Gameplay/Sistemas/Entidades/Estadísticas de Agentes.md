@@ -49,13 +49,13 @@ Cualquier punto de locura provocado por un trauma relacionado con los Mitos (por
 # **Características**
 
 - **Descubrir**: Encontrar objetos, escuchar. ^descubrir
-- **Rastrear**: Seguir huellas, encontrar rastros.^rastrear
+- **Rastrear**: Seguir huellas, encontrar rastros. ^rastrear
 - **Sigilo**: Ocultarse, pasar desapercibido. ^sigilo
 - **Ocultismo**: Entender textos prohibidos, lore Mythos... ^ocultismo
-- **Lanzar**: Define el rango y la precisión de un agente al arrojar un arma u objeto.^lanzar
+- **Lanzar**: Define el rango y la precisión de un agente al arrojar un arma u objeto. ^lanzar
 - **Subterfugio**: Desarmar trampas, abrir cerraduras. ^subterfugio
-- **Medicina**: Aumenta la eficacia de los medicamentos.^medicina
-- **Perspicacia**: Entender estado de un personaje e intenciones .^perspicacia
+- **Medicina**: Aumenta la eficacia de los medicamentos. ^medicina
+- **Perspicacia**: Entender estado de un personaje e intenciones . ^perspicacia
 - **Intimidar**: ^intimidar
 - **Persuadir**: ^persuadir
 - **Engaño**: ^enganio
