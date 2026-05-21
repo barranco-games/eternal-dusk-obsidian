@@ -16,11 +16,12 @@ Algunas habilidades y armas podrán tener dos rangos, por ejemplo, Cerca/Media, 
 # Áreas de Daño
 Las habilidades/armas tendrán también el tipo de zona en la infligirán su efecto, cada tipo de área además podrá variar el tamaño que abarca:
 
-| Objetivo | La habilidad afecta a un único objetivo                           |
-| -------- | ----------------------------------------------------------------- |
-| Línea    | La habilidad afecta a todos los objetivos en el área de la línea  |
-| Cono     | La habilidad afecta a todos los objetivos en el área del cono     |
-| Esfera   | La habilidad afecta a todos los objetivos en el área de la esfera |
+| **Tipo**         | **Descripción**                                                       |
+| ------------ | ----------------------------------------------------------------- |
+| **Objetivo** | La habilidad afecta a un único objetivo                           |
+| **Línea**    | La habilidad afecta a todos los objetivos en el área de la línea  |
+| **Cono**     | La habilidad afecta a todos los objetivos en el área del cono     |
+| **Esfera**   | La habilidad afecta a todos los objetivos en el área de la esfera |
 
 ^tabla-areas
 

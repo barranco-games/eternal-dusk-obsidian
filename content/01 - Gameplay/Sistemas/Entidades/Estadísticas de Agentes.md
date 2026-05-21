@@ -69,6 +69,7 @@ Se añadirá un valor fijo a las tiradas relacionadas con medicamentos en funci�
 | 31 - 60      | +1                 |
 | 61 - 85      | +2                 |
 | 86 - 100     | +3                 |
+
 ^tabla-bm
 ### Rango Lanzamientos
 La distancia a la que podrá tirar objetos lanzables dependerá de su habilidad de [[Estadísticas de Agentes#^lanzar|Lanzamiento]].
@@ -79,4 +80,5 @@ La distancia a la que podrá tirar objetos lanzables dependerá de su habilidad 
 | 31 - 60    | [[Rangos y Áreas#^tabla-rangos\|Media]]     |
 | 61 - 85    | [[Rangos y Áreas#^tabla-rangos\|Lejos]]     |
 | 86 - 100   | [[Rangos y Áreas#^tabla-rangos\|Muy Lejos]] |
+
 ^tabla-lanzar

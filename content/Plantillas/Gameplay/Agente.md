@@ -13,10 +13,12 @@ COG: 0
 <!--SKILLS-END-->
 
 ## [[04 - Narrativa/Personajes/Party/Colt Egon|Descripción]]
+## Atributos
+
 # Habilidades
-| Nombre      | Efecto | Coste | CD  | Daño | Rango | Objetivo |
-| ----------- | ------ | :---: | :-: | :--: | :---: | :------: |
-|             |        |       |     |      |       |          |
+| Nombre | Efecto | Coste | CD  | Daño | Rango | Objetivo |
+| ------ | ------ | :---: | :-: | :--: | :---: | :------: |
+|        |        |       |     |      |       |          |
 
 
 
