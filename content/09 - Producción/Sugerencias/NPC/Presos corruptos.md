@@ -13,7 +13,7 @@ Mostrar el combate por primera vez al jugador.
 ## Posibles Misiones
 
 ## Relaciones
-No tiene relaciones.
+[[Gremio de Alquimistas]]
 ## Área
 Fortaleza/Prisión.
 ## Notas

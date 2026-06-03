@@ -13,7 +13,7 @@ Mostrar por primera vez la corrupción del oro.
 ## Posibles Misiones
 
 ## Relaciones
-Son miembros del gremio de Alquimistas.
+Son miembros del [[Gremio de Alquimistas]].
 ## Área
 Fortaleza/Prisión
 ## Notas

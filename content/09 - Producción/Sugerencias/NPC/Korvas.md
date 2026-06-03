@@ -16,12 +16,9 @@ Enemigo final de zona principal, se nos presenta como Jefe de la fortaleza/prisi
 Korvas aunque mandado por Makabel, es el causante directo de los experimentos que se realizan en la fortaleza con lo que tiene mucha información de lo que esta ocurriendo y luego puede tener un factor venganza por parte de Lorenzo.
 ## Posibles Misiones
 Es el punto de inflexión al final de la primera misión de escapar de la prisión, luego mas adelante puede aparecer con la corrupción del oro controlada y ser un enemigo final de alguna misión más adelantada.
-
 ## Relaciones
-Tiene relación con Colt Egon y el gremio de Alquimistas, principalmente con Makabel.
-
+Tiene relación con [[content/04 - Narrativa/Personajes/Party/Colt Egon|Colt Egon]] y el [[Gremio de Alquimistas]]
 ## Área
 Fortaleza/Prisión.
-
 ## Notas
 Se puede hacer que Korvas mencione la relación de Makabel con Colt Egon (o cualquier relación con alguno del círculo de Makabel), hablando de que ‘X’ advirtió a Korvas o le propio Korvas comente que Colt Egon podría ser un problema y no debería tener libertad en la fortaleza.
