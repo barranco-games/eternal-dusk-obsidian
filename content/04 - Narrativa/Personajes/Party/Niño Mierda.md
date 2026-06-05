@@ -18,4 +18,4 @@ Descubrir que hay más mundo.
 - 
 # **Relaciones**
 - 
-# **[[03 - Entidades/Agentes/Party/Lorenzo|Estadísticas]]**
+# **[[03 - Entidades/Agentes/Party/Niño Mierda|Estadísticas]]**
