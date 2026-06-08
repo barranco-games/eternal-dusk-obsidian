@@ -1,7 +1,7 @@
 Representa los agentes que el jugador maneja, la party puede tener hasta 4 agentes activos aunque pueda haber más en la caravana. Un personaje es el líder de la party. 
 El grupo se puede dividir y manejar a los integrantes en pequeños grupos o individualmente ya sea para preparar un combate o explorar.
 Al pasar a una zona nueva la party se volverá a unir.
-Los miembros de la party solo se pueden cambiar desde la [[Caravana]].
+Los miembros de la party solo se pueden cambiar desde la [[Campamento]].
 La party puede tener valores que representen: 
 # Relación con facciones (Opcional)
 [[Dados#Ventaja y Desventaja|Ventaja/Desventaja]] o Bonus para tiradas en diálogos

@@ -1,15 +1,7 @@
-# Descanso Largo
-El jugador podrá hacer que su grupo tenga un descanso largo, este recuperará la salud máxima del equipo y tendrán que gastar 2 [[Provisiones]] para poder descansar.
-El [[Equipamiento]] se reparará por el [[Caravana#^armero|Armero]]
-Solo se puede hacer un descanso largo cuando hayan pasado 3 [[Tiempo|Días]] desde el último descanso ya sea largo o corto.
-Al descansar se avanzarán 3 [[Tiempo|Días]].
-El descanso largo solo se puede realizar desde la [[Caravana]].
-# Descanso Corto
-Cuando se descanse se gastará una [[Provisiones|Provisión]] se recuperarán un D6 de [[Estadísticas de Agentes#Salud|Salud]] pero podrán recuperar más dependiendo de la calidad de la [[Provisiones|Provisión]] usada. 
-También se podrán usar [[Provisiones#Kit de Reparación|]]
-También se podrán usar [[Provisiones#Kit de Reparación|Kits de Reparación]].
+El jugador podrá hacer que su grupo tenga un descanso, este recuperará la salud máxima del equipo.
+El [[Equipamiento]] se reparará por el [[Campamento#^armero|Armero]].
+Solo se puede hacer un descanso cuando haya pasado 1 [[Tiempo|Día]] desde el último descanso.
 Al descansar se avanzarán 1 [[Tiempo|Día]].
-Se podrán realizar 2 descansos cortos por descanso largo.
-El descanso corto se puede realizar en cualquier sitio siempre y cuando se tengan [[Provisiones]].
+El descanso solo se puede realizar desde el [[Campamento]].
 
-No realizar un descanso pasados más de seis [[Tiempo|Días]] desde el último empezará a disminuir el [[Party#Estado de ánimo|Estado de ánimo]] de la [[Party]] cada vez que transcurra un [[Tiempo|Día]].
+No realizar un descanso pasados más de 2 [[Tiempo|Días]] desde el último empezará a disminuir el [[Party#Estado de ánimo|Estado de ánimo]] de la [[Party]] cada vez que transcurra un [[Tiempo|Día]].
