@@ -9,15 +9,16 @@ Mejores tiendas
 Diferentes comentarios emergentes
 Posibilidad de bloquear o desbloquear misiones
 Visitas/Eventos en la caravana
+# Mythos
+Es una estadística oculta que no se le mostrará al jugador. Al ver una entidad de Mito, tener contacto con una, leer libros de conocimiento prohibido... se aumentará la estadística. Cada vez que se pase cierto umbral se desbloqueará un punto de para mejorar los personajes. 
 
-# Cohesión: Relaciones entre personajes (Opcional)
-Si se quiere un sistema así habría que establecer que hace que se forme/mejoré la relación entre dos personajes. 
-¿Es algo más mecánico? Se tiene en cuenta que han ido a por el mismo objetivo, le ha curado/salvado varias veces...
-¿Es más narrativo? Avanza cuando se hacen sus misiones o con la trama principal.
-¿Combinación de ambos?
-¿Que aporta/desbloquea? Nuevas habilidades ya sean pasivas o habilidades duales/grupales, nuevas reacciones como una especie de follow up o algo
+>[!example]- Mythos en COC 
+>Aumento de la habilidad «Mitos de Cthulhu»
+Cualquier punto de locura provocado por un trauma relacionado con los Mitos (por ejemplo, un monstruo de los Mitos o un tomo de los Mitos bajo los efectos de un hechizo de los Mitos) hace que aumente la habilidad «Mitos de Cthulhu». La primera vez que se sufra locura relacionada con los Mitos de esta forma, se añaden 5 puntos a la habilidad «Mitos de Cthulhu». (Lo que reduce la cordura máxima)
+>Cualquier locura adquirida debido a futuros traumas provocados por el mito da lugar a la suma de 1 punto por cada caso.
+
 # Estado de ánimo 
-Dependerá de las [[Provisiones]] que usen para [[Descansos|Descansar]] en la caravana y su [[Estadísticas de Agentes#Cordura|Cordura]]. Obtendrán distintos buffos o penalizaciones dependiendo de este. 
+Dependerá de los [[Descansos|Descansos]] en el [[Campamento]] y su [[Estadísticas de Agentes#Cordura|Cordura]]. Obtendrán distintos buffos o penalizaciones dependiendo de este. 
 # Stats Grupales
 Media de una [[Estadísticas de Agentes|Estadística]] en concreto de todos los integrantes de la party.
 

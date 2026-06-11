@@ -38,14 +38,6 @@ Es un recurso que los agentes usarán para realizar habilidades. El máximo que 
 | 85–124    | 2        |
 | 125–164   | 3        |
 | 165–200   | 4        |
-## Mythos
-Es una estadística oculta que no se le mostrará al jugador. Al ver una entidad de Mito, tener contacto con una, leer libros de conocimiento prohibido... se aumentará la estadística. Cada vez que se pase cierto umbral se desbloqueará un habilidad nueva o se mejorará una habilidad innata del agente. 
-
->[!example]- Mythos en COC 
->Aumento de la habilidad «Mitos de Cthulhu»
-Cualquier punto de locura provocado por un trauma relacionado con los Mitos (por ejemplo, un monstruo de los Mitos o un tomo de los Mitos bajo los efectos de un hechizo de los Mitos) hace que aumente la habilidad «Mitos de Cthulhu». La primera vez que se sufra locura relacionada con los Mitos de esta forma, se añaden 5 puntos a la habilidad «Mitos de Cthulhu». (Lo que reduce la cordura máxima)
->Cualquier locura adquirida debido a futuros traumas provocados por el mito da lugar a la suma de 1 punto por cada caso.
-
 # **Características**
 
 - **Descubrir**: Encontrar objetos, escuchar. ^descubrir

@@ -17,16 +17,16 @@ COG: 85
 
 <!--SKILLS-START-->
 
-| **Característica** | **Valor** |
-|:---|:---:|
-| **[[Estadísticas de Agentes#^descubrir\|Descubrir]]** | 67 |
-| **[[Estadísticas de Agentes#^sigilo\|Sigilo]]** | 57 |
-| **[[Estadísticas de Agentes#^ocultismo\|Ocultismo]]** | 37 |
-| **[[Estadísticas de Agentes#^lanzar\|Lanzar]]** | 45 |
-| **[[Estadísticas de Agentes#^intimidar\|Intimidar]]** | 43 |
-| **[[Estadísticas de Agentes#^subterfugio\|Subterfugio]]** | 55 |
-| **[[Estadísticas de Agentes#^perspicacia\|Perspicacia]]** | 42 |
-| **[[Estadísticas de Agentes#^medicina\|Medicina]]** | 45 |
+| **Característica**                                        | **Valor** |
+| :-------------------------------------------------------- | :-------: |
+| **[[Estadísticas de Agentes#^descubrir\|Descubrir]]**     |    67     |
+| **[[Estadísticas de Agentes#^sigilo\|Sigilo]]**           |    57     |
+| **[[Estadísticas de Agentes#^ocultismo\|Ocultismo]]**     |    37     |
+| **[[Estadísticas de Agentes#^lanzar\|Lanzar]]**           |    45     |
+| **[[Estadísticas de Agentes#^intimidar\|Intimidar]]**     |    43     |
+| **[[Estadísticas de Agentes#^subterfugio\|Subterfugio]]** |    55     |
+| **[[Estadísticas de Agentes#^perspicacia\|Perspicacia]]** |    42     |
+| **[[Estadísticas de Agentes#^medicina\|Medicina]]**       |    45     |
 <!--SKILLS-END-->
 
 ## [[04 - Narrativa/Personajes/Party/Colt Egon|Descripción]]
