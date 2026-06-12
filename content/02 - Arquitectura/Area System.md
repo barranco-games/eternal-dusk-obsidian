@@ -1,77 +1,52 @@
-> **Last updated:** May 2026
-
----
-
 ## Table of Contents
 
-1. [Overview](#1-overview)
-2. [Clean Architecture Layers](#2-clean-architecture-layers)
-3. [Core Concepts](#3-core-concepts)
-4. [World Grid & Chunk System](#4-world-grid--chunk-system)
-5. [Height & Vision Model](#5-height--vision-model)
-6. [Area Pipeline](#6-area-pipeline)
-7. [AreaCore & AreaDefinition](#7-areacore--areadefinition)
-8. [QueryBatch](#8-querybatch)
-9. [Area Types](#9-area-types)
-10. [Rendering](#10-rendering)
-11. [Fog of War](#11-fog-of-war)
-12. [Vision Area](#12-vision-area)
-13. [Skill Area](#13-skill-area)
-14. [Revealers & Revealables](#14-revealers--revealables)
-15. [Key Interfaces](#15-key-interfaces)
-16. [Frame Lifecycle](#16-frame-lifecycle)
-17. [Performance](#17-performance)
-18. [Memory Budget](#18-memory-budget)
+1. [Overview](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#1-overview)
+2. [Core Concepts](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#2-core-concepts)
+3. [World Grid & Chunk System](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#3-world-grid--chunk-system)
+4. [Height & Vision Model](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#4-height--vision-model)
+5. [Area Pipeline](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#5-area-pipeline)
+6. [AreaCore & AreaDefinition](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#6-areacore--areadefinition)
+7. [QueryBatch](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#7-querybatch)
+8. [Area Types](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#8-area-types)
+9. [Rendering](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#9-rendering)
+10. [Fog of War](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#10-fog-of-war)
+11. [Vision Area](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#11-vision-area)
+12. [Skill Area](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#12-skill-area)
+13. [Revealers & Revealables](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#13-revealers--revealables)
+14. [Frame Lifecycle](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#14-frame-lifecycle)
+15. [Performance](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#15-performance)
+16. [Memory Budget](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#16-memory-budget)
 
 ---
 
 ## 1. Overview
 
-The Area System is a GPU-accelerated spatial query framework responsible for computing and rendering all grid-based areas: fog of war, elemental spread, unit vision, movement range, and skill areas of effect.
+The Area System is a GPU-accelerated spatial query framework responsible for computing and rendering all grid-based areas: fog of war, unit vision, skill targeting areas, and (planned) elemental spread and movement range.
 
 It operates on a chunked 2.5D heightfield grid, persists fog data per save slot via memory-mapped files, and exposes a clean event-based API to the rest of the game.
-
 ### Design Goals
 
 - **Correctness at scale** — 10,240 × 10,240 cell world, no global recompute on mutation
 - **Zero runtime allocation** — all hot-path allocations eliminated
 - **Predictable frame cost** — query budget enforced per batch
 - **Declarative configuration** — area behaviour expressed as data, not subclasses
-- **Clean architecture** — strict layer boundaries enforced by separate assemblies
 
 ---
 
-## 2. Clean Architecture Layers
-
-```
-Core → Gameplay → Systems → Engine
-```
-
-### Core
-Pure C#, zero Unity references. Interfaces and value types only.
-
-### Gameplay
-Domain logic. No Unity. Contains `GridChunk`, `WorldGrid`, `AreaCore`, `AreaDefinition`, `FogOfWarResolver`, `VisionAreaResolver`, `SkillAreaResolver`, query providers, resolvers.
-
-### Systems
-Depends on Core + Gameplay. Contains `QueryBatch`, `ChunkManager`, `AreaPipeline`, GPU abstraction interfaces.
-
-### Engine
-Unity APIs only here. Contains `AreaService`, `UnityBakeJob`, `MultiChunkRenderer`, `AreaMeshBuilder`, `GlobalTileStreamer`, `FogWorkingBuffer`, `FogPersistenceStore`, `AreaInstaller`, `SkillAreaService`.
-
----
-
-## 3. Core Concepts
+## 2. Core Concepts
 
 ### Grid Constants
 
 ```
-Cell size:        0.1 Unity units
-Chunk size:       128 × 128 cells
+Cell size:        0.1 Unity units  (GridConstants.CellSize)
+Chunk size:       128 × 128 cells  (ChunkSize; ChunkCellCount = 16384)
 Chunk world size: 12.8 Unity units
-Active region:    5 × 5 chunks around camera focus point
+World origin:     (-512, 0, -512)
+Grid:             80 × 80 chunks
+Active region:    5 × 5 chunks (ActiveRadius = 2)
 Max sight range:  100 cells (DerivedStats base value)
 Max fog range:    150 cells
+Skill max range:  100 cells (SkillMaxRange)
 ```
 
 ### Coordinate System
@@ -84,78 +59,88 @@ Max fog range:    150 cells
 
 ### Camera Focus Point
 
-Active chunk region centers on `ICameraManager.FocusPoint`. `ChunkManager` fires `OnCameraChunkChanged` on chunk boundary crossing.
+Active chunk region centers on the camera focus point. `ChunkManager` fires `OnCameraChunkChanged` on chunk boundary crossing.
 
 ---
 
-## 4. World Grid & Chunk System
+## 3. World Grid & Chunk System
 
 ### Cell Data Encoding
 
-| Bits | Field | Encoding |
+|Bits|Field|Encoding|
 |---|---|---|
-| 0–15 | Floor height | Fixed point, 1 unit = 100 counts |
-| 16 | Walkable flag | 1 = walkable |
-| 17–31 | Reserved | |
+|0–15|Floor height|Fixed point, 1 unit = 100 counts|
+|16|Walkable flag|1 = walkable|
+|17–31|Reserved||
 
-`VoidCell = 0x0000_0000`
+`VoidCell = 0x0000_0000`. Shader floor height = `(cell & 0xFFFF) * 0.01 / 0.1`.
 
 ### GridChunk Pooling
 
 - Pre-warmed with 25 instances at startup
 - `Initialize(chunkCoord)` — clears static cells only on coord mismatch
-- `Reset()` — clears dynamic overlay only, preserves baked data for coord-matched reuse
+- `Reset()` — clears dynamic overlay and `_blockedCells`, preserves baked data for coord-matched reuse
 - `_hasBakedData` + `_bakedCoord` — track validity across pool reuse
-- `GetMergeBuffer()` — merges static + dynamic, returns pre-allocated internal array
 
-### WorldGrid Array Indexing
+### GridChunk.GetMergeBuffer — zero-copy fast path
 
-```csharp
-ChunkOriginX = GridMath.FloorDiv((int)(worldOrigin.X * InvCellSize), ChunkSize)
-LocalX(chunkX) = chunkX - ChunkOriginX
-_chunks[LocalX(coord.X), LocalY(coord.Y)]
-```
+`SetDynamicBlocked` maintains a `List<int> _blockedCells` of blocked indices.
 
-All accesses — `IsValidChunk`, `GetChunk`, `ReturnChunk`, `Decompose`, `GetNeighbourhood` — use `LocalX`/`LocalY`. Critical: `IsValidChunk` must subtract chunk origin before unsigned comparison, otherwise out-of-range positive coords pass validation.
+- When `_blockedCells.Count == 0`, `GetMergeBuffer()` returns `_staticCells` **directly** — no copy, no per-cell merge (both `ChunkManager` call sites are read-only).
+- Otherwise it `Array.Copy`s static into the merge buffer and clears the walkable bit only on the blocked indices.
 
-### Obstacle Bake — Async Architecture
+This replaced the previous unconditional full-buffer merge.
 
-Bakes are asynchronous — `ChunkManager.ActivateChunkAsync` is a `UniTaskVoid` that:
-1. Schedules the bake job
-2. Polls `job.IsComplete` via `UniTask.Yield(PlayerLoopTiming.Update)` each frame — no background threads, no job system thread violations
-3. Applies bake result on main thread when complete
-4. Activates chunk — uploads to GPU, fires `OnChunkActivated`
+### Obstacle Bake — Synchronous Drain Model
 
-`ChunkManager` owns a `CancellationTokenSource` linked to `IApplicationLifetime.ApplicationStopping` — cancelled in `Dispose` to stop all in-flight async tasks.
+Bakes are scheduled on the job system and drained on the main thread — no `UniTaskVoid` polling, no async state machine, no per-chunk `CancellationToken`.
 
-`_pendingBakes` dictionary replaced by `_bakingChunks` `HashSet` — tracks in-flight coords without holding job references.
+`ChunkManager.Update(focusPosition)`:
 
-`OnBatchActivated` event removed — mesh rebuilds triggered per-chunk via `OnChunkActivated`.
+1. `FlushDirtyChunks` — re-uploads runtime geometry changes, fires `OnChunkDirty`
+2. `DrainPendingBakes` — scans completed bakes, finalizes them
+3. On camera chunk change: `UpdateActiveRegion` (deactivate out-of-range) + `OnCameraChunkChanged`
+4. `ActivatePendingChunks`
+
+`ActivatePendingChunks`:
+
+- Ready chunks (already baked, non-void) → `ActivateReady` immediately
+- Void chunks → schedule a bake job into `_pendingBakes` (`List<PendingBake>`) and `_bakingChunks` (`HashSet`)
+
+`PendingBake` is a `readonly struct { Int2Data Coord; IBakeJob Job; }`.
+
+`DrainPendingBakes` iterates `_pendingBakes`, and for each `job.IsComplete`:
+
+- Removes from `_pendingBakes` / `_bakingChunks`
+- If the chunk is no longer desired (or disposed) → reset + return the job to the pool, skip
+- Else `chunk.CopyBakedDataFrom(job)`, return the job, `ActivateReady`
+
+`ActivateReady` uploads the merge buffer to a GPU obstacle buffer, marks the chunk clean, and fires `OnChunkActivated`.
+
+`Update` stays synchronous — it schedules and drains, never blocks.
 
 ### Bake Job & Buffer Pooling
 
-**`UnityBakeJobFactory`** — pre-warmed with 25 jobs. Each `UnityBakeJob` allocates three `Allocator.Persistent` `NativeArray`s once at construction. `Reset()` on `IBakeJob` interface prepares for reuse.
+**`UnityBakeJobFactory`** — pre-warmed with 25 jobs. Each `UnityBakeJob` allocates its `Allocator.Persistent` `NativeArray`s once at construction. `Reset()` prepares for reuse.
 
-**`UnityObstacleBufferFactory`** — pre-warmed with 25 buffers. Each `UnityChunkBuffer` holds a `ComputeBuffer` for the chunk's cell data. `Reinitialize(coord)` for reuse — buffer never disposed between uses.
+**`UnityObstacleBufferFactory`** — pre-warmed with 25 buffers. Each holds a `ComputeBuffer` reused via `Reinitialize(coord)` — never disposed between uses.
 
-Both factories implement `IDisposable` — dispose all pooled instances at scene teardown.
-
-### ChunkManager
-
-- `Update` stays synchronous — fires async tasks and returns
-- `FlushDirtyChunks` runs each frame for runtime geometry changes
-- `GetActiveChunkCoords()` — used by `GlobalTileStreamer.ReloadActiveTiles`
-- `OnCellObstacleChanged` uses `GridMath.FloorDiv` for chunk coord
+Both factories implement `IDisposable` and dispose all pooled instances at teardown.
 
 ---
 
-## 5. Height & Vision Model
+## 4. Height & Vision Model
 
-### Sightline Test (2.5D DDA)
+### Sightline Test (2.5D DDA, layered)
+
+Shadowcast marches a DDA line per cell, testing against two layers:
+
+- **Terrain** — floor-height occlusion (`marchFloorH > sightlineH`)
+- **Obstacle** — discrete blockers (walls) that occlude regardless of height
 
 ```hlsl
 sightlineH = lerp(revealerEyeH, targetFloorH, t / dist)
-blocked = marchFloorH > sightlineH
+blocked = (marchFloorH > sightlineH) || obstacleHit
 ```
 
 Revealer eye height = floor height + 1.8 Unity units.
@@ -163,21 +148,18 @@ Revealer eye height = floor height + 1.8 Unity units.
 ### Output Mask Addressing
 
 ```hlsl
-// Shader write — row-major
-uint bitIndex = localY * diameter + localX;
+// Shadowcast write — row-major (local to the query's own diameter)
+uint bitIndex = localY * diameter + localX;     // diameter = 2*radius + 1
 
-// CPU merge read (per query, no slot offset — merge target starts at 0)
-int queryBitIndex = localY * diameter + localX;
-int wordIndex = queryBitIndex >> 5;
-int bitOffset = queryBitIndex & 31;
-
-// Explored/vision state — column-major
+// Explored / vision state — column-major
 int bitIndex = chunkLocalX * ChunkSize + chunkLocalY;
 ```
 
+`AreaVisibilityTracker` and the local-area blit both decode the shadowcast mask **row-major at the query diameter**.
+
 ### Multi-Revealer Mask
 
-The merge kernel ORs all query slots into one merge target starting at index 0. Each query in `result.Queries` has its own center and radius. `MergeIntoAllChunks` and `ProjectIntoChunks` iterate each query independently — the bit offset within the merged mask is always slot-relative to index 0 (no `slotStart` offset needed since merge has already combined them).
+The merge kernel ORs all query slots into one merge target starting at index 0. Each query in `result.Queries` keeps its own center and radius; the bit offset within the merged mask is always relative to index 0 (no `slotStart` offset — merge has already combined the slots).
 
 ### Cross-Chunk Neighbourhood
 
@@ -185,18 +167,21 @@ The merge kernel ORs all query slots into one merge target starting at index 0. 
 
 ---
 
-## 6. Area Pipeline
+## 5. Area Pipeline
 
 ### AreaService
 
-Central coordinator — owns all area system wiring for a scene. Uses `[Inject]` for container dependencies. Initialized by `AreaInstaller.OnContainerBuilt`.
+Central coordinator — owns all area-system wiring for a scene. Initialized by `AreaInstaller`.
 
 **Setup methods (called in order):**
-- `SetupGlobalBatch` — creates global `QueryBatch`, `ShadowcastProcessor`, shared `AreaMeshBuilder`
-- `SetupLocalBatch` — creates local `QueryBatch` and `ShadowcastProcessor` (no skill area wiring)
-- `SetupFogOfWar` — creates fog renderer (`ownsStaticData: true`), resolver, streamer, working buffer, savable
-- `SetupVisionArea` — creates vision renderer (`ownsStaticData: false`), resolver, revealer source
-- `SetupSkillArea` — creates `SkillAreaService` using local batch (currently disabled)
+
+- `SetupGlobalBatch` — creates the global `QueryBatch` + `ShadowcastProcessor`
+- `SetupLocalBatch` — creates the local `QueryBatch` + `ShadowcastProcessor`
+- `SetupFogOfWar` — fog renderer (own `AreaMeshBuilder`, `ownsStaticData: true`, `subscribeMeshEvents: true`), resolver, streamer, working buffer, savable; `RevealableRegistrar.SetAreas({fogDefinition})`
+- `SetupVisionArea` — vision renderer (own `AreaMeshBuilder`, `ownsStaticData: true`, `subscribeMeshEvents: true`), resolver, revealer source
+- `SetupSkillArea` — creates `SkillAreaService` (local batch, converter, entity source, chunk manager, **`RevealableRegistrar`**, blit shader, skill material, world origin, `SkillMaxRange`)
+
+**Fog and vision each own a separate `AreaMeshBuilder`.** They were previously a single shared builder; sharing caused a one-frame "old texture on new mesh" flicker on region shift because the two renderers resolve on independent GPU schedules and would move the shared mesh out from under each other. Separate meshes (~26 MB each, accepted) removed the flicker.
 
 **`IAreaService`** (Systems) exposes `ISkillAreaService SkillAreaService`.
 
@@ -209,363 +194,361 @@ ProcessFrame()
   → foreach batch: batch.ProcessFrame(cameraCell)
 ```
 
-### QueryBatch
+### QueryBatch instances
 
-Two instances:
 - **Global** — fog + vision, `SlotSize = ComputeSlotSize(150)`, `MaxSlots = 32`
-- **Local** — skill areas, `SlotSize = ComputeSlotSize(MaxSightRange)`, `MaxSlots = 32`
+- **Local** — skill area, `SlotSize = ComputeSlotSize(SkillMaxRange = 100)`, `MaxSlots = 32`
+
+`ComputeSlotSize(r) = ((2r+1)² + 31) / 32` uints.
 
 ---
 
-## 7. AreaCore & AreaDefinition
+## 6. AreaCore & AreaDefinition
 
 ### AreaCore Dirty States
 
 ```
-Clean → DirtyOnce → Clean     (position change, one update)
+Clean → DirtyOnce → Clean      (position change, one update)
 Clean/DirtyOnce → Continuous   (never cleared by QueryBatch)
 ```
 
-`ClearDirty` is a no-op when state is `Continuous`.
+`ClearDirty` is a no-op when state is `Continuous`. Fog and skill use `DirtyOnce`; vision uses `Continuous`.
 
 ### AreaDefinition
 
-Caches `AlgorithmName`, `PersistenceName`, `SchedulingName` as strings at construction — avoids `enum.ToString()` allocation in editor debug capture.
+Constructor args: `name, core, queryProvider, resolver, algorithm, maxRange, persistence, scheduling, renderer, visibilityTracker, autoRender`.
+
+- `visibilityTracker` non-null ⇒ `TrackVisibility` on. Fog/vision pass no-op trackers; the skill area passes a real one.
+- Caches `AlgorithmName`/`PersistenceName`/`SchedulingName` strings at construction to avoid `enum.ToString()` allocation in editor debug capture.
 
 ---
 
-## 8. QueryBatch Internals
+## 7. QueryBatch Internals
 
 **ProcessFrame sequence:**
-1. `_dispatchedThisFrame.Clear()` — prevents double dispatch within one ProcessFrame
-2. FullClear on first frame
-3. ClearUsedSlots (skipped if pending readbacks)
-4. SlotAllocator.Reset
-5. BuildSchedule
-6. CollectQueries
-7. DispatchQueries
-8. MergeAndRequestReadbacks — skips areas in `_pendingReadbacks` OR `_dispatchedThisFrame`
-9. On readback complete → remove from `_pendingReadbacks` → OnResolved
 
-**`_dispatchedThisFrame`** — cleared at start of each `ProcessFrame`. Prevents the case where a readback completes within the same Unity frame it was requested, clearing `_pendingReadbacks` and allowing an immediate re-dispatch before the next `ProcessFrame`.
+1. `_dispatchedThisFrame.Clear()`
+2. `FlushPendingUnregisters` — deferred unregister applied at frame start
+3. `FullClear` on first frame
+4. `ClearUsedSlots` (skipped if any readback pending)
+5. `SlotAllocator.Reset`
+6. `BuildSchedule` → `CollectQueries` → `DispatchQueries` → `MergeAndRequestReadbacks`
+7. On readback complete → `ResolveArea`
 
-**`AreaSystemUpdater.Tick`** — `_timer = 0f` (not `-= RefreshRate`) prevents debt accumulation. `ProcessFrame` fires at most once per Unity frame. All renderer ticks and `SetCameraPosition` are inside the 30Hz gate.
+### CollectQueries — anchor write-back
 
-**`AreaDebugBridge`** — `CaptureFrame` gated by `IsWindowOpen` — zero allocation when debug window closed.
+`AreaRuntimeState` is a **struct**. `CollectQueries` reads it, sets `state.AnchorCell` from the first query's center, and **must write it back** (`_runtime[area] = state;`) — otherwise the anchor update is lost on the copy and `ComputeScore`'s distance term reads a stale `(0,0)`, flattening locality scoring.
+
+### MergeAndRequestReadbacks guards
+
+Each area group is skipped unless it is still live and consistent: `_runtime.ContainsKey` **and** `_mergeTargets.ContainsKey`, and not in `_pendingReadbacks` or `_dispatchedThisFrame`. The `ContainsKey` pair prevents a crash when an area (e.g. the skill area) is unregistered mid-flight.
+
+GPU-resolved areas (vision, via `IGPUAreaResolver`) consume the merged buffer on the GPU — no readback, no CPU scatter.
+
+### ResolveArea — empty-resolve guard (one-shot correctness)
+
+```
+_pendingReadbacks.Remove(area)            // always, so a fresh dispatch can follow
+if result.Queries.Count == 0: return      // no-op — do NOT consume dirty
+resolver.OnResolved(...)
+if TrackVisibility: visibilityTracker.Update(...)
+if AutoRender: renderer.Render(...)
+PostResolve(area)                         // clears dirty ONLY on a real resolve
+```
+
+An empty resolve renders nothing, so it must not consume the dirty flag — otherwise a one-shot (`DirtyOnce`) area can lose its single update to an empty pass and never draw. Leaving it dirty lets it re-dispatch and resolve for real. `PostResolve` (which calls `Core.ClearDirty`) runs only for non-empty resolves.
+
+### Deferred unregister
+
+`Unregister` adds to `_pendingUnregister` and removes the area from `_pendingReadbacks`/`_dispatchedThisFrame`. `FlushPendingUnregisters` (start of `ProcessFrame`) removes runtime + merge target. Avoids mutating collections mid-iteration and racing in-flight readbacks.
+
+**`_dispatchedThisFrame`** — caps an area at one dispatch per `ProcessFrame`, even if a readback completes within the same Unity frame.
+
+**`AreaSystemUpdater.Tick`** — `_timer = 0f` (not `-= RefreshRate`) prevents debt accumulation; the whole area-system update (renderer ticks, camera position, `ProcessFrame`) runs at most once per Unity frame, gated to 30 Hz.
 
 ---
 
-## 9. Area Types
+## 8. Area Types
 
-| Area | Batch | Kernel | Persistence | Scheduling | Dirty Mode | Renderer |
+|Area|Batch|Kernel|Persistence|Dirty|Renderer|Status|
 |---|---|---|---|---|---|---|
-| Fog of War | Global | PersistentBlit | FogWorkingBuffer | Normal | DirtyOnce | MultiChunkRenderer |
-| Vision Area | Global | Blit | None | Normal | Continuous | MultiChunkRenderer |
-| Skill Area | Local | BlitLocal | None | Normal | DirtyOnce | AreaRenderer |
-| Elemental Area | Global | PersistentBlit | FogWorkingBuffer | Normal | DirtyOnce | MultiChunkRenderer |
-| Movement Area | Local | BlitLocal | None | Normal | DirtyOnce | IAreaRenderer |
+|Fog of War|Global|PersistentBlit|FogWorkingBuffer|DirtyOnce|MultiChunkRenderer|active|
+|Vision Area|Global|ProjectVision (GPU)|None|Continuous|MultiChunkRenderer|active|
+|Skill Area|Local|BlitLocal|None|DirtyOnce|AreaRenderer|active|
+|Elemental Area|Global|PersistentBlit|FogWorkingBuffer|DirtyOnce|MultiChunkRenderer|planned|
+|Movement Area|Local|BlitLocal|None|DirtyOnce|AreaRenderer|planned|
 
 ---
 
-## 10. Rendering
+## 9. Rendering
 
-### Compute Shader Kernels
+### Compute Shader Kernels (single shader file)
 
-**`PersistentBlit`** — monotonic reveal, fog only:
-```hlsl
-float alpha = min(current.a, 1.0 - revealed);
-```
+- **`PersistentBlit`** — fog, monotonic reveal, column-major (`id.x*ChunkSize + id.y`), offset write. `alpha = min(current.a, 1 - revealed)`.
+- **`Blit`** — direct overwrite, column-major, offset write. `alpha = 1 - visible`.
+- **`ProjectVision`** — vision GPU projection. Reads the merged mask row-major, writes region-local texels offset by `RegionOriginCell`, skips cells whose chunk isn't in `ActiveChunkMask`. Punches visible cells to alpha 0 over an alpha-1 region.
+- **`BlitLocal`** — skill, row-major (`id.y*ChunkSize + id.x`), circle mask (`radius = ChunkSize/2`). **Writes with offset** (`TargetTexture[int2(OffsetX+id.x, OffsetY+id.y)]`) so a sub-range query lands centered in the fixed field; `alpha = visible` inside the circle, 0 outside.
+- **`Clear`** — resets texture to `(0,0,0,1)` (opaque). Used by fog/vision (unexplored = opaque).
+- **`ClearTransparent`** — resets texture to `(0,0,0,0)`. Used by the skill field (outside-the-disc = invisible). Required because `BlitLocal`'s offset write no longer clears cells outside the query block.
 
-**`Blit`** — direct overwrite, vision (column-major addressing):
-```hlsl
-uint bitIndex = id.x * ChunkSize + id.y;
-float alpha = 1.0 - visible;
-```
+### MultiChunkRenderer (fog, vision)
 
-**`BlitLocal`** — direct overwrite, local areas (row-major addressing, circle mask):
-```hlsl
-uint bitIndex = id.y * ChunkSize + id.x;
-float alpha = dist > radius ? 0.0 : visible;
-```
+Generic, reusable. Constructor selects the kernel (`PersistentBlit` for fog, GPU project for vision), `subscribeMeshEvents`, and `ownsStaticData`. **Both fog and vision now own their static data and subscribe to chunk events** (each has its own mesh).
 
-**`Clear`** — resets entire texture to `(0,0,0,1)`.
+**Async sync model** — nothing blocks; the mesh is scheduled async and applied in `Tick`. The texture repaints in the same `Tick` the mesh applies, so origin and texture never disagree:
 
-### MultiChunkRenderer
+- `Tick()` → `EnsureMeshScheduled()`; on mesh apply, flips `_meshTargetOrigin` → `_currentRegionOrigin` and calls `Paint()`.
+- `EnsureMeshScheduled` (gated on `HasPendingJob`): region-shift takes priority (sets target origin, builds static data first time, schedules rebuild), else a `_contentDirty` rebuild at the current origin.
+- `RequestBlit(blit, clearTexture)` caches the blit delegate; paints immediately only if no region shift and no pending job.
+- `OnChunkActivated` / `OnChunkDirty` just set `_contentDirty = true`, coalescing N activations into one rebuild.
+- Both resolvers cache their blit delegates (zero per-frame closure allocation). `ApplyPendingRegionOrigin` was removed.
 
-Generic, reusable. Constructor parameters:
-- `blitKernelName` — selects kernel (`"PersistentBlit"` for fog, `"Blit"` for vision)
-- `subscribeMeshEvents` — fog subscribes to `OnChunkActivated`/`OnChunkDirty`, vision does not
-- `ownsStaticData` — fog `true` (calls `BuildStaticData`), vision `false` (skips it, avoids double build on shared mesh)
+**Show timing** — vision defers `Show()` until its first `OnResolved`, ensuring the mesh job has completed before `SetActive(true)`; avoids a `WaitForGPU` pipeline stall.
 
-**`SetActiveRegionOrigin`** — clears texture. Used by fog on region shift.
-**`UpdateRegionOrigin`** — no clear, no mesh rebuild. Used by vision to track region origin for correct `BlitChunk` offsets.
+### AreaMeshBuilder — interleaved single upload
 
-Fog and vision share one `AreaMeshBuilder` — fog drives all mesh rebuilds via `OnChunkActivated`.
+Vertices are one `NativeArray<MeshVertex>` where `MeshVertex { float3 Position; float3 Normal; }` (`[StructLayout(Sequential)]`).
 
-**`Show` / `Tick` design** — `Show()` sets `_shown = true` and calls `_gameObject.SetActive(true)` directly. Vision defers calling `Show()` until `OnResolved` fires — this ensures the mesh job from fog has already completed naturally before the GameObject is activated, avoiding the `WaitForGPU` stall that occurs when `SetActive(true)` is called while a mesh job is still in flight.
+- `BuildStaticData` declares Position + Normal in **stream 0**, UVs in **stream 1**.
+- `Apply()` does a single `SetVertexBufferData(_vertexData, 0, 0, _vertexCount, stream:0, SilentUpdate)` where `SilentUpdate = DontRecalculateBounds | DontValidateIndices | DontResetBoneBounds | DontNotifyMeshUsers`. Replaces the prior two `SetVertices` + `SetNormals` uploads (~4.9 MB each).
+- Bounds are set manually from a `ComputeBoundsJob`.
 
-### AreaMeshBuilder
+**Jobs & dependency chain:**
 
-Parameterized for arbitrary cell dimensions — default is 5×5 chunk region (fog/vision), parameterized for skill area diameter. `ScheduleVertexRebuild` takes `chunksPerRow`, `regionChunkOriginX/Y` to correctly index cell data for non-chunk-aligned regions.
+- `BuildMeshVerticesJob` writes `.Position` (reads the struct first, so **not** `[WriteOnly]`).
+- `BuildMeshNormalsJob` reads neighbour `.Position.y`, writes `.Normal`; `[NativeDisableParallelForRestriction]` on the shared array; takes `CellSize` (`normal = normalize(float3(hl-hr, 2*CellSize, hd-hu))`).
+- `ComputeBoundsJob` reads `.Position`.
+- Because bounds and normals share the array, `boundsJob.Schedule(normalsHandle)` (not the vertex handle), and `_pendingJob = boundsHandle` directly.
 
-### AreaRenderer (Local Areas)
+`ScheduleVertexRebuild` is guarded by `if (_jobPending) return;` and takes `chunksPerRow`, `regionChunkOriginX/Y` for non-chunk-aligned regions.
 
-- Per-session: created on `BeginTargeting`, disposed on `EndTargeting`
-- Creates its own `AreaMeshBuilder` sized to `diameter` cells
-- Subscribes to `ChunkManager.OnChunkActivated` to rebuild mesh when terrain changes
-- Only rebuilds if activated chunk overlaps the skill area region
-- `Tick()` called by `AreaSystemUpdater` via `SkillAreaService.Tick()`
-- Terrain height sampling uses `AreaCellDataExtractor.Fill` with correct chunk span
+### AreaRenderer (local areas)
+
+Fixed-field renderer for the skill area:
+
+- **Built once at `_maxRange`** and kept for the app lifetime — _not_ per-session. The field is always `2*_maxRange+1` (diameter 201); the texture, mesh, and mask buffer are all this fixed size. `maskBuffer = ComputeSlotSize(_maxRange)` to match the batch's fixed slot output.
+- A skill's **window radius** drives only which cells the query lights, never the geometry. Short-range skills light a smaller centered disc; future cone/line shapes are just different lit subsets of the same field.
+- `SetQueryCenter(center, radius)` stores center + radius and rebuilds the mesh (always full field, centered on the caster).
+- `Render(mask, count)` decodes at the **query diameter** and centers the block via `OffsetX/Y = (diameter - queryDiameter)/2`, dispatching `queryDiameter/8` thread groups. This is what lands the disc on the caster.
+- `Clear()` uses `ClearTransparent` over the full field.
+- Subscribes to `OnChunkActivated` to rebuild the mesh when overlapping terrain changes. Terrain sampling via `AreaCellDataExtractor.Fill`.
 
 ---
 
-## 11. Fog of War
+## 10. Fog of War
 
 ### Persistence Architecture
 
-**`FogWorkingBuffer`** — mmf in `temporaryCachePath`. Scene lifetime. All area system reads/writes here. `CloseMapping`/`OpenMapping` for bulk operations via `FileStream` directly — avoids `MemoryMappedViewAccessor` overhead on Mono.
+**`FogWorkingBuffer`** — mmf in `temporaryCachePath`, scene lifetime. All reads/writes go here. `OpenMapping`/`CloseMapping` wrap mmf creation/teardown; `Create` delegates to `OpenMapping`, `Dispose` to `CloseMapping`. `Exists`/`Load`/`Save`/`Flush` are null-guarded against a closed accessor (the mmf is closed during `File.Copy`). Bulk ops use `FileStream` directly to avoid `MemoryMappedViewAccessor` overhead on Mono.
 
-**`FogPersistenceStore`** — flat binary files in `persistentDataPath`. Save: `File.Copy(mmf → save file)` async. Load: `File.Copy(save file → mmf)` async, then reopen mapping.
+**`FogPersistenceStore`** — flat binary files in `persistentDataPath`. Save flushes the buffer then `File.Copy(mmf → save)`. Load closes the mapping, `File.Copy(save → mmf)`, reopens, then `ReloadActiveTiles`.
 
-**Flow:**
 ```
-New Game  → FogWorkingBuffer.Zero() → clear in-memory state → play
-Save      → FlushAll → File.Copy(mmf → save file)
-Load      → File.Copy(save file → mmf) → reopen mapping → ReloadActiveTiles
-Quit      → FogWorkingBuffer.Dispose() → mmf deleted
+New Game  → FogWorkingBuffer.Zero()
+Save      → Flush → File.Copy(mmf → save)
+Load      → CloseMapping → File.Copy(save → mmf) → OpenMapping → ReloadActiveTiles
+Quit      → FogWorkingBuffer.Dispose() (mmf deleted)
 ```
 
 ### Explored State
 
-- One `uint[512]` per chunk (128×128 / 32)
-- Pooled by chunk coord — zero allocation after first visit
-- Bits only set, never cleared — permanent fog reveal
-- `_dirtyChunks` — tracks chunks with newly revealed cells this frame only
-- `OnChunkDeactivated` always saves to working buffer
-- `CommitAllExploredStates` — for explicit flush before save
+- One `uint[512]` per chunk (128×128 / 32), bits only ever set (permanent reveal).
+- Pooled via a **size-based free list** (`Stack<uint[]> _freeStates`): `OnChunkDeactivated` pushes the array back, `GetOrCreateExploredState` pops + `Array.Clear`. Reactivation restores prior state from the mmf round-trip. This removed the per-never-seen-chunk `new uint[512]` GC spikes during exploration.
+- `_dirtyChunks` tracks chunks revealed this frame; `OnChunkDeactivated` always saves to the working buffer.
 
-### Multi-Revealer Fog
+### Save-on-Load ordering
 
-`MergeIntoAllChunks` iterates each query in `result.Queries` independently. Bit addressing uses `wordIndex = queryBitIndex >> 5` with no slot offset — merge kernel has already combined all slots into the merge target starting at index 0.
+On load, chunks activate and would otherwise fire `LoadTileAsync` before the copy/mapping-reopen finished, reading a null accessor. Fixes:
+
+- `GlobalTileStreamer.OnChunkActivated` early-returns while `_pendingReload` is set; `ReloadActiveTiles` is the single load entry after reload.
+- `LoadTileAsync` resolves the explored state and yields **before** touching the mmf, so nothing reads it on the activation frame.
 
 ### Tile Loading — Async
 
-`GlobalTileStreamer.LoadTileAsync` uses `UniTask.Yield` to spread 25 tile loads across frames. Owns `CancellationTokenSource` linked to `IApplicationLifetime.ApplicationStopping`.
-
-`ReloadActiveTiles` also fires async loads — called when store is set and camera chunk is known.
-
-`_pendingReload` flag — set on `SetWorkingBuffer`, triggers `ReloadActiveTiles` on first `OnCameraChunkChanged` after store is set.
+`LoadTileAsync` spreads 25 tile loads across frames via `UniTask.Yield`, with a `CancellationToken` linked to `ApplicationStopping`. `_pendingReload` is set on `SetWorkingBuffer` and triggers `ReloadActiveTiles` on the first `OnCameraChunkChanged` after the store is set.
 
 ---
 
-## 12. Vision Area
+## 11. Vision Area
 
 ### Design
 
-Current-frame visibility only — no accumulation. Each `OnResolved`:
-1. Clear CPU chunk masks (`Array.Clear`)
-2. Project current GPU mask into per-chunk bitmasks (`ProjectIntoChunks`)
-3. Blit each chunk via `Blit` kernel
-4. Call `Show()` on first resolve — deferred to avoid WaitForGPU stall
+Current-frame visibility only — no accumulation. Resolved entirely on the GPU (`ProjectVision`): the merged mask is projected into the region texture, visible cells punched to alpha 0 over an alpha-1 field, skipping cells whose chunk isn't active. No readback, no CPU scatter.
 
-### Show Timing — Critical Design Decision
+### Show Timing
 
-Vision calls `_renderer.Show()` from `OnResolved`, not from `OnActiveRegionChanged`. This is intentional:
+Vision calls `Show()` from `OnResolved`, not on region change — by then the mesh job has completed naturally, avoiding the `WaitForGPU` stall that `SetActive(true)` triggers while a Burst mesh job is in flight.
 
-- `OnActiveRegionChanged` fires when `OnCameraChunkChanged` fires — at this point the shared mesh builder may have a pending Burst job in flight from fog's rebuild
-- Calling `SetActive(true)` while a mesh job is in flight causes Unity to sync the GPU pipeline, causing a 2-second `WaitForGPU` stall
-- `OnResolved` fires after the GPU readback completes — by this point at least one full frame has passed and the mesh job has completed naturally
-- This eliminates the stall entirely with no visible quality difference
+### Scheduling & Region Shift
 
-### Scheduling
-
-`SchedulingHint.Normal` + `MarkDirtyContinuous` — always schedules. `_dispatchedThisFrame` guard in `QueryBatch` caps dispatches at one per `ProcessFrame` call regardless of readback speed.
-
-### Region Shift
-
-`VisionAreaResolver.OnActiveRegionChanged` calls `UpdateRegionOrigin` — updates `_currentRegionOrigin` for correct `BlitChunk` offsets. No mesh rebuild, no texture clear.
-
-### Chunk Tracking
-
-`VisionAreaResolver` tracks active chunks via named delegates stored on `AreaService` — properly unsubscribed in `Dispose`.
+`SchedulingHint.Normal` + `Continuous` — always schedules; `_dispatchedThisFrame` caps it at one dispatch per `ProcessFrame`. On region shift the resolver updates `_currentRegionOrigin` for correct projection offsets — no texture clear, no extra mesh rebuild beyond the standard `Tick` path.
 
 ---
 
-## 13. Skill Area
+## 12. Skill Area
 
 ### Design
 
-- Transient — created on `BeginTargeting`, destroyed on `EndTargeting`
-- One caster (current) or N casters (multicaster skills via `ManualRevealerSource`)
-- `IAreaRenderer` — local quad, repositions and conforms to terrain height
-- `SchedulingHint.Normal` + `DirtyOnce` — fires on caster position change
-- Local `QueryBatch` — separate from global batch
-- Not persistent
+- One caster (or N via `ManualRevealerSource`), local `QueryBatch`, not persistent.
+- One-shot: `MarkDirtyOnce` per `BeginTargeting`; fires a single query and waits for player input.
+- `AreaRenderer` fixed field (see §9) — built once, reused across sessions.
+- On `Deactivate`, the core dirty is cleared (`_core.ClearDirty()`) so a deactivated skill stops being scheduled, and the renderer is cleared (`ClearTransparent`) + hidden.
 
-### ISkillAreaService
+### Range integration
 
-Lives in Systems. Exposed via `IAreaService.SkillAreaService`.
+`BeginTargeting(EntityId casterId, RangeProfile range)`. The window's max distance drives the **reveal radius** (which cells light), independent of the caster's sight range:
 
 ```
-BeginTargeting(casterId, range) → creates renderer, resolver, definition, registers with local batch
-EndTargeting() → unregisters, disposes renderer and resolver
+ResolveRadius(window):
+  if window.Max >= float.MaxValue: return _maxRange     // unbounded clamps to batch ceiling
+  cells = ceil(window.Max / CellSize)
+  return clamp(cells, 1, _maxRange)                      // _maxRange cap is mandatory (slot budget)
 ```
+
+The radius flows only to `_revealerSource.Add(caster, radius)`. `RangeProfile { Window: RangeBounds, Shape: AreaShape, Bands }`; `RangeBounds` is min-inclusive / max-exclusive. (Unit note: `Window.Max` is treated as world units → divided by `CellSize`. `Window.Min` donut and cone/line shapes are not yet wired — they need kernel support.)
+
+### Target selection (visibility tracker)
+
+The skill definition carries a real `AreaVisibilityTracker`, and the skill core is fed the same revealables as fog via `RevealableRegistrar.AddArea`. As the resolved area reports revealables entering/exiting, `SkillAreaService` maintains:
+
+- `IReadOnlyCollection<EntityId> InAreaEntities`
+- `event Action OnAreaChanged`
+
+`TargetingPresenter` is reactive:
+
+- **`SelfTargetStrategy`** creates no area — it highlights the caster directly.
+- **Single/Multi** subscribe to `OnAreaChanged`, call `BeginTargeting`, and highlight the intersection of `InAreaEntities` and the strategy filter, diffing against the currently-subscribed set (highlight/clear deltas; selected targets stay subscribed). An immediate refresh after `BeginTargeting` picks up an already-resolved set when re-targeting the same skill.
+
+Because the area is one-shot, the valid-target set is locked at `BeginTargeting` until the next call. The empty-resolve guard (§7) and the tracker's empty-resolve guard (§13) make this robust against intermittent empty resolves consuming the one-shot dirty.
 
 ---
 
-## 14. Revealers & Revealables
+## 13. Revealers & Revealables
 
 ### Revealer Sources
 
-**`PartyRevealerSource`** — party members. `continuous: true` for vision, `false` for fog.
+- **`PartyRevealerSource`** — party members (`continuous: true` for vision, `false` for fog).
+- **`ManualRevealerSource`** — skill casters, explicit `Add`/`Remove`.
+- **`FactionRevealerSource`** — planned, per-faction vision.
 
-**`FactionRevealerSource`** — planned, per-faction vision.
+All use push-based revealers via `IEntity.OnPositionChanged`, updating only on cell change.
 
-**`ManualRevealerSource`** — skill casters. Explicit `Add`/`Remove` per entity.
+### RevealableRegistrar
 
-All sources use `AgentRevealer` — push-based via `IEntity.OnPositionChanged`, updates only on cell change.
+Owns the `EntityRevealable` per entity and feeds them to registered areas.
 
-### Multi-Revealer Correctness
+- `_revealables` is populated **unconditionally** on `OnEntityRegistered` (independent of whether areas are set yet). Only the area-adding is gated on `_areas`. This fixes a bug where entities registered before `SetAreas` (including the constructor's initial sweep) were permanently dropped, leaving area cores with no revealables.
+- `SetAreas` and `AddArea` both **back-fill** existing `_revealables` into the area's core. `AddArea` is additive — used to register the skill area after it's lazily built.
+- `OnEntityUnregistered` null-guards `_areas`.
 
-Both fog and vision support up to 32 revealers simultaneously. Each revealer gets its own slot in the output mask. The merge kernel ORs all slots into one target. Resolvers read the merged target with per-query center/radius but no slot offset.
+### EntityRevealable
 
-`AreaVisibilityTracker.IsVisibleInAnyQuery` checks each query's region independently.
+Exposes `EntityId`, `GridPosition` (push-updated, `MoveThreshold = 0.1`), and `IsTargetable` (default true). `GridPosition` is in the same cell space as query centers.
 
----
+### AreaVisibilityTracker
 
-## 15. Key Interfaces
+`Update(revealables, result)` builds `VisibleRevealables` via `IsVisibleInAnyQuery` (row-major decode at the query diameter, checks `IsTargetable` + `GridPosition`), then `DetectTransitions` fires enter/exit against the previous frame's set.
 
-### Systems
+**Empty-resolve guard:** `if (result.Queries.Count == 0) return;` — a resolve with no active query (e.g. a one-shot skill query that already fired and isn't dirty) is "no new information," not "everyone left." Without this, the next idle resolve would fire exit for all revealables and clear the highlights. (`QueryBatch.ResolveArea` also skips the tracker on empty resolves; either guard suffices, both are kept.)
 
-```csharp
-interface IBakeJob
-{
-    Int2Data ChunkCoord { get; }
-    bool IsComplete { get; }
-    void Schedule(Int2Data chunkCoord, Vector3Data worldOrigin);
-    void CopyResultTo(uint[] destination);
-    void Reset();
-    void Dispose();
-}
-
-interface IObstacleBufferFactory
-{
-    IObstacleBuffer Create(Int2Data chunkCoord);
-    void Return(IObstacleBuffer buffer);
-}
-
-interface IBakeJobFactory
-{
-    IBakeJob Create();
-    void Return(IBakeJob job);
-}
-
-interface IAreaService
-{
-    ISkillAreaService SkillAreaService { get; }
-}
-
-interface ISkillAreaService
-{
-    void BeginTargeting(EntityId casterId, int range);
-    void EndTargeting();
-}
-
-interface ISavable
-{
-    string Id { get; }
-    int Version { get; }
-    SaveEnvelope Capture(IEnvelopeSerializer serializer);
-    void Restore(SaveEnvelope envelope, IEnvelopeSerializer serializer);
-    void Reset();
-    UniTask<SaveEnvelope> CaptureAsync(IEnvelopeSerializer serializer);
-    UniTask RestoreAsync(SaveEnvelope envelope, IEnvelopeSerializer serializer);
-}
-```
+Fog/vision use no-op trackers; only the skill area consumes the enter/exit callbacks.
 
 ---
 
-## 16. Frame Lifecycle
+## 14. Frame Lifecycle
 
 ```
 AreaSystemUpdater.Tick (every Unity frame)
-  _timer += deltaTime
-  if _timer < RefreshRate: return
-  _timer = 0f
-
-  → pipeline.SetCameraPosition(camera.FocusPoint)
-  → fogRenderer?.Tick()     → AreaMeshBuilder.TryApplyPendingMesh
-  → visionRenderer?.Tick()  → AreaMeshBuilder.TryApplyPendingMesh
-  → skillAreaService?.Tick() → AreaRenderer.Tick
+  _timer += deltaTime; if _timer < RefreshRate: return; _timer = 0f
+  → pipeline.SetCameraPosition(focusPoint)
+  → fogRenderer.Tick()     → TryApplyPendingMesh → Paint on apply
+  → visionRenderer.Tick()  → TryApplyPendingMesh → Paint on apply
+  → skillService.Tick()    → AreaRenderer.Tick → TryApplyPendingMesh
   → pipeline.ProcessFrame()
 
-AreaPipeline.ProcessFrame (30Hz, at most once per Unity frame)
+AreaPipeline.ProcessFrame (30 Hz, ≤ once per Unity frame)
   → LocalAreaContext.TryShift(cameraCell)
   → ChunkManager.Update(focusPosition)
       FlushDirtyChunks
+      DrainPendingBakes → CopyBakedDataFrom → ActivateReady → OnChunkActivated
       if camera changed:
-        UpdateActiveRegion → deactivate out-of-range chunks
-        OnCameraChunkChanged
-          → GlobalTileStreamer → FogOfWarResolver.OnActiveRegionChanged
-                               → SetActiveRegionOrigin → ScheduleMeshRebuild
-          → VisionAreaResolver.OnActiveRegionChanged
-                               → UpdateRegionOrigin (no rebuild)
-        ActivatePendingChunks → ActivateChunkAsync (fires UniTaskVoid per chunk)
-          Each frame: yield → check job.IsComplete → activate → OnChunkActivated
-            → GlobalTileStreamer.LoadTileAsync (yields, loads mmf)
-            → MultiChunkRenderer.OnChunkActivated (mesh rebuild if in region, fog only)
+        UpdateActiveRegion → deactivate out-of-range
+        OnCameraChunkChanged → fog/vision resolvers update region origin
+      ActivatePendingChunks → ready: ActivateReady; void: schedule bake into _pendingBakes
   → globalBatch.ProcessFrame(cameraCell)
-      _dispatchedThisFrame.Clear()
-      BuildSchedule → CollectQueries → DispatchQueries → MergeAndRequestReadbacks
-      On readback complete → ResolveArea → OnResolved
-        Fog: MergeIntoAllChunks → BlitChunk per chunk
-        Vision: ProjectIntoChunks → BlitChunk per chunk → Show() on first resolve
+      FlushPendingUnregisters → BuildSchedule → CollectQueries → DispatchQueries → MergeAndRequestReadbacks
+      readback complete → ResolveArea (empty resolves skipped, don't clear dirty)
+        Fog: MergeIntoAllChunks → blit per chunk
+        Vision: GPU ProjectVision (no readback) → Show() on first resolve
   → localBatch.ProcessFrame(cameraCell)
+        Skill: ResolveArea → SkillAreaResolver.Render + AreaVisibilityTracker.Update → OnAreaChanged
 ```
 
 ---
 
-## 17. Performance
+## 15. Performance
 
 ### Zero Hot-Path Allocation
 
-| Operation | Mechanism |
+|Operation|Mechanism|
 |---|---|
-| Chunk bake jobs | Pre-warmed pool of 25, NativeArrays reused via Reset() |
-| Chunk buffers | Pre-warmed pool of 25, ComputeBuffer reused via Reinitialize() |
-| Chunk GridChunk objects | Pre-warmed pool of 25 |
-| Explored/vision state | Pre-allocated, pooled by coord |
-| Cell extraction | `UnsafeUtility.MemCpy` SIMD bulk copy |
-| GPU readback | Per-request `NativeArrayHolder`, `ArrayPool<uint>` |
-| Readback callback | Pooled `ReadbackCallback` with pre-allocated `List<ScheduledQuery>` |
-| Working buffer write | mmf write = memory operation |
-| Save | `File.Copy` async on thread pool |
-| Vision chunk masks | Pooled `uint[]` by coord |
-| Debug capture | Gated by `IsWindowOpen` — zero allocation when closed |
-| Enum strings | Cached on `AreaDefinition` at construction |
+|Chunk bake jobs|Pre-warmed pool of 25, NativeArrays reused via `Reset()`|
+|Chunk buffers|Pre-warmed pool of 25, ComputeBuffer reused via `Reinitialize()`|
+|GridChunk objects|Pre-warmed pool of 25|
+|Merge buffer|Zero-copy `_staticCells` return when no dynamic blocks|
+|Explored state|Size-based free-list pool (`Stack<uint[]>`)|
+|Vision chunk masks|Pooled `uint[]` by coord|
+|Mesh upload|Single interleaved `SetVertexBufferData` with silent update flags|
+|GPU readback|Per-request holder, `ArrayPool<uint>`|
+|Readback callback|Pooled `ReadbackCallback` with pre-allocated `List<ScheduledQuery>`|
+|Blit delegates|Cached per resolver — no per-frame closures|
+|Working buffer write|mmf write = memory operation|
+|Save|`File.Copy` async on thread pool|
+|Debug capture|Gated by `IsWindowOpen`|
+|Enum strings|Cached on `AreaDefinition` at construction|
 
 ### Async Spreading
 
-- Chunk bakes: `UniTask.Yield` per frame poll — 25 chunks activate progressively
-- Tile loads: `UniTask.Yield` per load — 25 tile loads spread across frames
-- Both use `CancellationToken` linked to `IApplicationLifetime.ApplicationStopping`
+- Chunk bakes: scheduled on the job system, drained on the main thread via `DrainPendingBakes` (progressive, no blocking)
+- Tile loads: `UniTask.Yield` per load, spread across frames
+- Tile-load cancellation linked to `ApplicationStopping`
+
+### Scheduling
+
+`ComputeScore` weights dirty (1000), distance (×100, falloff over `MaxScoreDistance = 512` cells), and age (cap 200). The `AnchorCell` write-back (§7) is required for the distance term to be live.
+
+### Estimated Frame Cost
+
+These are reasoned estimates, **not profiled numbers** — actual cost depends on hardware, party size (revealer count), camera speed, and target frame rate. Assume a 60 fps target (16.7 ms budget), a mid-range GPU, and ~4–8 revealers. The whole update is gated to 30 Hz, so it runs on roughly every other rendered frame; the amortized per-frame cost is about half the per-tick figures below.
+
+|Scenario|Main-thread CPU|Notes|
+|---|---|---|
+|Steady state (camera still, no targeting)|~0.1–0.3 ms (~1–2%)|Schedule/query building over ≤32 areas, ≤128 queries; a few compute dispatches. Most real work is GPU shadowcast/merge/blit, typically a fraction of a millisecond.|
+|Active exploration (camera panning across chunk boundaries)|brief spikes to ~1–2 ms (~6–12%)|Dominated by the per-mesh ~13 MB vertex upload on region shift plus a row of chunk bakes and GPU obstacle uploads — not the query pipeline.|
+|Skill targeting|well under the steady-state figure|One extra one-shot local query + a visibility-tracker pass over revealables.|
+
+In the common case the system should sit comfortably under ~2–3% of a 60 fps frame, with brief single-digit-percent spikes while terrain streams in. The dominant cost is **mesh upload on region shift**, which is exactly what the single interleaved upload and the 30 Hz gate are there to contain. Scaling factors to watch: revealer count (more queries/dispatches), max range (larger shadowcast regions, quadratic in radius), and camera speed (region-shift frequency). These figures should be replaced with profiler captures before treating them as a budget.
 
 ---
 
-## 18. Memory Budget
+## 16. Memory Budget
 
-| Resource | Size | Count | Total |
+|Resource|Size|Count|Total|
 |---|---|---|---|
-| Chunk obstacle buffer (GPU) | 256 KB | 25 active | 6.25 MB |
-| GridChunk pool (CPU) | 144 KB each | 25 pre-warmed | 3.6 MB |
-| Fog render texture | 640×640 RGBA | 1 | 1.6 MB |
-| Vision render texture | 640×640 RGBA | 1 | 1.6 MB |
-| Skill area render texture | ~200×200 RGBA | 1 transient | ~0.16 MB |
-| Query output masks (global) | SlotSize × 32 | 1 | ~3 MB |
-| Query output masks (local) | LocalSlotSize × 32 | 1 | ~0.3 MB |
-| Cross-chunk neighbourhood | 9 × 256 KB | 2 (one per batch) | 4.5 MB |
-| Explored state per chunk | 2 KB | 25 active | 50 KB |
-| Vision chunk masks | 2 KB | 25 active | 50 KB |
-| AreaMeshBuilder vertices (shared) | ~5 MB | 1 | 5 MB |
-| AreaMeshBuilder vertices (skill) | ~0.3 MB | 1 transient | 0.3 MB |
-| FogWorkingBuffer (mmf) | ChunkCountX × ChunkCountY × 512B | 1 | ~3.1 MB (80×80) |
+|Chunk obstacle buffer (GPU)|256 KB|25 active|6.25 MB|
+|GridChunk pool (CPU)|144 KB each|25|3.6 MB|
+|Fog render texture|640×640 RGBA|1|1.6 MB|
+|Vision render texture|640×640 RGBA|1|1.6 MB|
+|Skill render texture|201×201 RGBA|1|~0.16 MB|
+|Query output masks (global)|SlotSize(150) × 32|1|~3 MB|
+|Query output masks (local)|SlotSize(100) × 32|1|~0.3 MB|
+|Cross-chunk neighbourhood|9 × 256 KB|2 (one per batch)|4.5 MB|
+|Explored state per chunk|2 KB|25 active|50 KB|
+|Vision chunk masks|2 KB|25 active|50 KB|
+|AreaMeshBuilder (fog)|~26 MB|1|~26 MB|
+|AreaMeshBuilder (vision)|~26 MB|1|~26 MB|
+|AreaMeshBuilder (skill)|~2.8 MB|1|~2.8 MB|
+|FogWorkingBuffer (mmf)|80×80 × 512 B|1|~3.1 MB|
+|**Total**|||**~79 MB**|
+
+Split is roughly **~17 MB GPU** (obstacle buffers, render textures, query masks, cross-chunk neighbourhood) and **~62 MB CPU** (mesh builders dominate at ~55 MB, plus the GridChunk pool and the mmf). The two full-size mesh builders (fog + vision, ~26 MB each) are the deliberate cost of separate meshes — accepted to remove the region-shift flicker. The skill builder is now persistent (build-once), not transient. Note the builders' CPU-side NativeArrays are staging copies; the GPU-resident `Mesh` vertex/index buffers (~23 MB each) are additional and not itemised here.
