@@ -1,21 +1,21 @@
 ## Table of Contents
 
-1. [Overview](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#1-overview)
-2. [Core Concepts](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#2-core-concepts)
-3. [World Grid & Chunk System](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#3-world-grid--chunk-system)
-4. [Height & Vision Model](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#4-height--vision-model)
-5. [Area Pipeline](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#5-area-pipeline)
-6. [AreaCore & AreaDefinition](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#6-areacore--areadefinition)
-7. [QueryBatch](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#7-querybatch)
-8. [Area Types](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#8-area-types)
-9. [Rendering](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#9-rendering)
-10. [Fog of War](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#10-fog-of-war)
-11. [Vision Area](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#11-vision-area)
-12. [Skill Area](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#12-skill-area)
-13. [Revealers & Revealables](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#13-revealers--revealables)
-14. [Frame Lifecycle](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#14-frame-lifecycle)
-15. [Performance](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#15-performance)
-16. [Memory Budget](https://claude.ai/chat/11076893-caf5-4379-84f8-5228676c66ee#16-memory-budget)
+- [[Area System#1. Overview|Overview]]
+- [[Area System#2. Core Concepts|Core Concepts]]
+- [[Area System#3. World Grid & Chunk System|World Grid & Chunk System]]
+- [[Area System#4. Height & Vision Model|Height & Vision Model]]
+- [[Area System#5. Area Pipeline|Area Pipeline]]
+- [[Area System#6. AreaCore & AreaDefinition|AreaCore & AreaDefinition]]
+- [[Area System#7. QueryBatch|QueryBatch]]
+- [[Area System#8. Area Types|Area Types]]
+- [[Area System#9. Rendering|Rendering]]
+- [[Area System#10. Fog of War|Fog of War]]
+- [[Area System#11. Vision Area|Vision Area]]
+- [[Area System#12. Skill Area|Skill Area]]
+- [[Area System#13. Revealers & Revealables|Revealers & Revealables]]
+- [[Area System#14. Frame Lifecycle|Frame Lifecycle]]
+- [[Area System#15. Performance|Performance]]
+- [[Area System#16. Memory Budget|Memory Budget]]
 
 ---
 
