@@ -494,63 +494,6 @@
         }
       ],
       "collapsed": false
-    },
-    {
-      "id": "241928c1-6149-4aab-bbd0-ef40207b156b",
-      "name": "Operaciones",
-      "type": "Multi",
-      "command": false,
-      "choices": [
-        {
-          "id": "88b70b01-bd94-43eb-ba7f-14d158326999",
-          "name": "Estadísticas de Agentes",
-          "type": "Multi",
-          "command": false,
-          "choices": [
-            {
-              "id": "2b90e88e-63d9-4c84-afd0-3a723b881f91",
-              "name": "Recalcular Estadísticas",
-              "type": "Macro",
-              "command": false,
-              "runOnStartup": false,
-              "macro": {
-                "name": "Recalcular Estadísticas",
-                "id": "1786b309-a3b7-489a-8e1d-5832df222994",
-                "commands": [
-                  {
-                    "name": "recalculate-stats",
-                    "type": "UserScript",
-                    "id": "685e9466-8e56-4eae-92dc-4d26f90673dc",
-                    "path": "Templater/Scripts/recalculate-stats.js",
-                    "settings": {}
-                  }
-                ]
-              }
-            },
-            {
-              "id": "27af754c-dace-42e3-9ff4-eac65abd120d",
-              "name": "Recalcular Características",
-              "type": "Macro",
-              "command": false,
-              "runOnStartup": false,
-              "macro": {
-                "name": "Recalcular Características",
-                "id": "521c4125-5511-454e-a921-524a198f088c",
-                "commands": [
-                  {
-                    "name": "recalculate-skills",
-                    "type": "UserScript",
-                    "id": "befe3ff5-baeb-4491-834d-70374ed9afa7",
-                    "path": "Templater/Scripts/recalculate-skills.js",
-                    "settings": {}
-                  }
-                ]
-              }
-            }
-          ],
-          "collapsed": true
-        }
-      ]
     }
   ],
   "inputPrompt": "single-line",

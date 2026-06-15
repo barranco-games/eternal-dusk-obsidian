@@ -24,5 +24,5 @@ Hombre de unos 30 a 40 años. Sus rasgos identificadores son su brazo y ojo izqu
 # **Facción**
 - 
 # **Relaciones**
-- [[Louise-Lloys Viper]]
+- [[04 - Narrativa/Personajes/Party/Louise-Lloys Viper]]
 # **[[03 - Entidades/Agentes/Party/Lorenzo|Estadísticas]]**

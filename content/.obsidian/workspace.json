@@ -8,17 +8,45 @@
         "type": "tabs",
         "children": [
           {
-            "id": "ed031f02fb8668b4",
+            "id": "577338b869c7a365",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "03 - Entidades/Agentes/Party/Niño Mierda.md",
+                "file": "03 - Entidades/Agentes/Party/Louise-Lloys Viper.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Niño Mierda"
+              "title": "Louise-Lloys Viper"
+            }
+          },
+          {
+            "id": "f64984bb0ea7bf2c",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "03 - Entidades/Agentes/Party/Lorenzo.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Lorenzo"
+            }
+          },
+          {
+            "id": "b5fe75367ba0ffd2",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "01 - Gameplay/Sistemas/Agentes/Estadísticas de Agentes.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Estadísticas de Agentes"
             }
           }
         ]
@@ -195,8 +223,20 @@
       "omnisearch:Omnisearch": false
     }
   },
-  "active": "ed031f02fb8668b4",
+  "active": "577338b869c7a365",
   "lastOpenFiles": [
+    "03 - Entidades/Agentes/Party/Lorenzo.md",
+    "01 - Gameplay/Sistemas/Agentes/Estadísticas de Agentes.md",
+    "03 - Entidades/Agentes/Party/Louise-Lloys Viper.md",
+    "04 - Narrativa/Personajes/Party/Louise-Lloys Viper.md",
+    "03 - Entidades/Agentes/Party/Niño Mierda.md",
+    "04 - Narrativa/Personajes/Party/Niño Mierda.md",
+    "03 - Entidades/Agentes/Party/Colt Egon.md",
+    "04 - Narrativa/Personajes/Party/Colt Egon.md",
+    "Plantillas/Gameplay/Agente.md",
+    "04 - Narrativa/Personajes/Party/Lorenzo.md",
+    "04 - Narrativa/Personajes/Party/Zarigüeya y Ooch.md",
+    "04 - Narrativa/Personajes/Party/Mente Colmena.md",
     "03 - Entidades/Agentes/Enemigos/Alquimista.md",
     "Imágenes de Referencia/CoreLoop.png",
     "02 - Arquitectura/Area System.md",
@@ -210,21 +250,7 @@
     "01 - Gameplay/Sistemas/Investigación.md",
     "01 - Gameplay/Sistemas/Progresión.md",
     "01 - Gameplay/Sistemas/Diario.md",
-    "02 - Arquitectura/Resources System.md",
-    "01 - Gameplay/Sistemas/Party.md",
     "Imágenes de Referencia",
-    "01 - Gameplay/Sistemas/Agentes/Estadísticas de Agentes.md",
-    "01 - Gameplay/Sistemas/Tiradas/Dados.md",
-    "03 - Entidades/Agentes/Party/Colt Egon.md",
-    "03 - Entidades/Agentes/Party/Lorenzo.md",
-    "01 - Gameplay/Sistemas/Sigilo.md",
-    "01 - Gameplay/Mecánicas/Pactos (Whishlist).md",
-    "01 - Gameplay/Sistemas/Inventario.md",
-    "01 - Gameplay/Sistemas/Campamento.md",
-    "01 - Gameplay/Mecánicas/Estados.md",
-    "01 - Gameplay/Sistemas/Mapamundi.md",
-    "01 - Gameplay/Sistemas/Tiempo.md",
-    "01 - Gameplay/Sistemas/Turnos.md",
     "09 - Producción/Sugerencias/Facción",
     "Templater/Scripts/fix-link-format.js",
     "Templater/Scripts/Nuevo Documento de texto.txt",

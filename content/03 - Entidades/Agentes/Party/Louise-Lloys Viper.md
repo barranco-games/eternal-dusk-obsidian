@@ -19,7 +19,7 @@
 | **[[Estadísticas de Agentes#^intimidar\|Intimidar]]**     |           |
 | **[[Estadísticas de Agentes#^persuadir\|Persuadir]]**     |           |
 | **[[Estadísticas de Agentes#^enganio\|Engaño]]**          |           |
-# [[04 - Narrativa/Personajes/Party/Colt Egon|Descripción]]
+# [[04 - Narrativa/Personajes/Party/Louise-LLoys Viper|Descripción]]
 # Atributos
 
 # Habilidades
