@@ -1,0 +1,248 @@
+{
+  "main": {
+    "id": "fdb1a8ed6d0967ed",
+    "type": "split",
+    "children": [
+      {
+        "id": "33fac844b60c9a83",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "ed031f02fb8668b4",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "03 - Entidades/Agentes/Party/Niño Mierda.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Niño Mierda"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "7c05b3b008d14bb5",
+    "type": "split",
+    "children": [
+      {
+        "id": "a78a611af462c840",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "959a5ce6e64cbfa8",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "018b384b1be32b49",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": true
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "d1980d7029d0f7ad",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ],
+        "currentTab": 1
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "6d482ea2bc510b66",
+    "type": "split",
+    "children": [
+      {
+        "id": "853b18631e1714a7",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "e2c83850e90dc8c6",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "BaldursWest/Mecánicas/Estadísticas de Entidades.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for Estadísticas de Entidades"
+            }
+          },
+          {
+            "id": "3a4699c8acbcc032",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "BaldursWest/Mecánicas/Estadísticas de Entidades.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from Estadísticas de Entidades"
+            }
+          },
+          {
+            "id": "c351761ac248b91c",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "54d72090900843ac",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "Eternal Dusk/Templates/Gameplay/Personaje.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of Personaje"
+            }
+          },
+          {
+            "id": "d93df6ae0c8d94e2",
+            "type": "leaf",
+            "state": {
+              "type": "advanced-tables-toolbar",
+              "state": {},
+              "icon": "spreadsheet",
+              "title": "Advanced Tables"
+            }
+          },
+          {
+            "id": "c73d065a5f02cef4",
+            "type": "leaf",
+            "state": {
+              "type": "git-view",
+              "state": {},
+              "icon": "git-pull-request",
+              "title": "Source Control"
+            }
+          }
+        ],
+        "currentTab": 5
+      }
+    ],
+    "direction": "horizontal",
+    "width": 200
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false,
+      "phrasesync:Reload PhraseSync": false,
+      "obsidian-excalidraw-plugin:New drawing": false,
+      "templater-obsidian:Templater": false,
+      "table-editor-obsidian:Advanced Tables Toolbar": false,
+      "obsidian-git:Open Git source control": false,
+      "omnisearch:Omnisearch": false
+    }
+  },
+  "active": "ed031f02fb8668b4",
+  "lastOpenFiles": [
+    "03 - Entidades/Agentes/Enemigos/Alquimista.md",
+    "Imágenes de Referencia/CoreLoop.png",
+    "02 - Arquitectura/Area System.md",
+    "01 - Gameplay/Mecánicas/Equipamiento.md",
+    "01 - Gameplay/Mecánicas/Economía.md",
+    "01 - Gameplay/Mecánicas/Descansos.md",
+    "01 - Gameplay/Mecánicas/Comerciantes.md",
+    "00 - Core/Referencias.md",
+    "00 - Core/Pilares de Diseño.md",
+    "00 - Core/Core Loop.md",
+    "01 - Gameplay/Sistemas/Investigación.md",
+    "01 - Gameplay/Sistemas/Progresión.md",
+    "01 - Gameplay/Sistemas/Diario.md",
+    "02 - Arquitectura/Resources System.md",
+    "01 - Gameplay/Sistemas/Party.md",
+    "Imágenes de Referencia",
+    "01 - Gameplay/Sistemas/Agentes/Estadísticas de Agentes.md",
+    "01 - Gameplay/Sistemas/Tiradas/Dados.md",
+    "03 - Entidades/Agentes/Party/Colt Egon.md",
+    "03 - Entidades/Agentes/Party/Lorenzo.md",
+    "01 - Gameplay/Sistemas/Sigilo.md",
+    "01 - Gameplay/Mecánicas/Pactos (Whishlist).md",
+    "01 - Gameplay/Sistemas/Inventario.md",
+    "01 - Gameplay/Sistemas/Campamento.md",
+    "01 - Gameplay/Mecánicas/Estados.md",
+    "01 - Gameplay/Sistemas/Mapamundi.md",
+    "01 - Gameplay/Sistemas/Tiempo.md",
+    "01 - Gameplay/Sistemas/Turnos.md",
+    "09 - Producción/Sugerencias/Facción",
+    "Templater/Scripts/fix-link-format.js",
+    "Templater/Scripts/Nuevo Documento de texto.txt",
+    "Templater/Scripts/recalculate-skills.js",
+    "Templater/Scripts/recalculate-stats.js",
+    "Templater/Scripts",
+    "Templater",
+    "Plantillas/Sugerencias",
+    "Plantillas/Gameplay",
+    "07 - Arte/Concept/Personajes/Lorenzo/Prota_Idle.png",
+    "Excalidraw/Scripts/Downloaded/Invert colors.svg",
+    "Excalidraw/Scripts/Downloaded/Lighten background color.svg",
+    "Excalidraw/Untitled.canvas",
+    "3719528a-f44a-46f1-9b5c-97445179b3ca.webp",
+    "5a0c681d-c6d6-4b9c-8037-f9b496ee0e55.webp",
+    "4a4be31a-d00f-4326-a9d1-32bf3fe4eef2.webp",
+    "4902a773-0103-4b6a-b45b-9c6831271d70.webp",
+    "84a99aed-b91f-4fb8-9284-fe843be2aeb4.webp",
+    "99eb55c0-3cb6-48ab-afa0-402a9070110b.webp"
+  ]
+}

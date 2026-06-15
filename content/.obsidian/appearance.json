@@ -1,0 +1,9 @@
+{
+  "cssTheme": "Minimal",
+  "theme": "obsidian",
+  "accentColor": "#aa88a9",
+  "enabledCssSnippets": [
+    "dataview-table",
+    "hide-properties"
+  ]
+}

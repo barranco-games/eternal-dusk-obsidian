@@ -1,0 +1,56 @@
+
+/* =========================
+   TABLAS DATAVIEW BASE
+========================= */
+
+.dataview table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+/* Celdas normales */
+.dataview th,
+.dataview td {
+  border: 1px solid var(--background-modifier-border) !important;
+  padding: 6px;
+  text-align: center !important;
+}
+
+/* =========================
+   ELIMINAR ARTEFACTOS "(3)" Y SIMILARES
+   (pseudo-elementos de temas)
+========================= */
+
+.dataview table td::before,
+.dataview table th::before,
+.dataview table td::after,
+.dataview table th::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* =========================
+   SEPARACIÓN ENTRE BLOQUES
+========================= */
+
+/* Línea separadora entre stats base y derivadas */
+.dataview table tr:nth-child(3) > * {
+  border-top: 2px solid var(--text-normal) !important;
+}
+
+/* =========================
+   ESTILO DE BLOQUE DERIVADO
+========================= */
+
+.dataview table tr:nth-child(3),
+.dataview table tr:nth-child(4) {
+  background-color: var(--background-secondary);
+}
+
+/* =========================
+   MEJORA VISUAL GENERAL
+========================= */
+
+.dataview th {
+  font-weight: bold;
+}
