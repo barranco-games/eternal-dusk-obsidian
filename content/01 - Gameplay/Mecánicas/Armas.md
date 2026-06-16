@@ -9,8 +9,8 @@ Las armas afectarán directamente a la habilidad de disparo de la entidad tienen
 	- **Estándar:** Tiene una bonificación plana de 50 para calcular la precisión.
 	- **Pesada:** Se le añade su [[Estadísticas de Agentes#Fuerza|Fuerza]].
 	- **Precisa:** Se le añade [[Estadísticas de Agentes#Destreza|Destreza]].  
-- **Tasa de Acierto:** (25 + **Tipo**/2)%
-- **Tirada de Fallo**: Es el resultado de los 2D10 que hará que el arma se encasquille, perdiendo parte de su durabilidad y teniendo que gastar [[Estadísticas de Agentes#Puntos de Acciones|PA]] para desencasquillarla. Esto solo se aplica a las armas de fuego.
+- **Tasa de Acierto:** (25 + **Tipo**/2)% ^tasa-acierto
+- **Tirada de Fallo**: Es el resultado de los 2D10 que hará que el arma se encasquille, perdiendo parte de su durabilidad y teniendo que gastar [[Estadísticas de Agentes#Puntos de Acciones|PA]] para desencasquillarla. Esto solo se aplica a las armas de fuego. ^tirada-fallo
 # Bonificadores de Daño (BD)
 La bonificación de daño se calcula según el **Tipo** del arma.
 

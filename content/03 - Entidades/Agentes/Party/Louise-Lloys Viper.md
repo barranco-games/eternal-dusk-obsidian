@@ -23,9 +23,9 @@
 # Atributos
 
 # Habilidades
-| Nombre | Efecto | Coste | CD  | Daño | Rango | Objetivo |
-| ------ | ------ | :---: | :-: | :--: | :---: | :------: |
-|        |        |       |     |      |       |          |
+| Nombre    | Efecto                                                            |                        Coste                         | CD  | Daño |  **[[Rangos y Áreas#Rangos\|Rango]]**   | **[[Rangos y Áreas#Áreas de Daño\|Objetivo]]** |
+| --------- | ----------------------------------------------------------------- | :--------------------------------------------------: | :-: | :--: | :-------------------------------------: | :--------------------------------------------: |
+| **Marca** | [[Estados#^marcado\|Marca]] a un enemigo durante tres [[Turnos]]. | 4 [[Estadísticas de Agentes#Puntos de Acciones\|PA]] |  5  |  -   | [[Rangos y Áreas#^tabla-rangos\|Lejos]] |   [[Rangos y Áreas#^tabla-areas\|Objetivo]]    |
 
 
 

@@ -1,10 +1,10 @@
 # Estadísticas
 
-| **[[Estadísticas de Agentes#Constitución\|CON]]** | **[[Estadísticas de Agentes#Fuerza\|FUE]]**  |  **[[Estadísticas de Agentes#Destreza\|DES]]**  |  **[[Estadísticas de Agentes#Poder\|POD]]**  | **[[Estadísticas de Agentes#Cognición\|COG]]** | **[[Estadísticas de Agentes#Suerte\|SUE]]** |
-| :-----------------------------------------------: | :------------------------------------------: | :---------------------------------------------: | :------------------------------------------: | :--------------------------------------------: | ------------------------------------------- |
-|                                                   |                                              |                                                 |                                              |                                                |                                             |
-|     **[[Estadísticas de Agentes#Salud\|HP]]**     | **[[Estadísticas de Agentes#Evasión\|EVA]]** | **[[Estadísticas de Agentes#Movimiento\|MOV]]** | **[[Estadísticas de Agentes#Cordura\|COR]]** |     **[[Estadísticas de Agentes#PA\|PA]]**     |                                             |
-|                                                   |                                              |                                                 |                                              |                                                |                                             |
+| **[[Estadísticas de Agentes#Constitución\|CON]]** |   **[[Estadísticas de Agentes#Fuerza\|FUE]]**   | **[[Estadísticas de Agentes#Destreza\|DES]]** |  **[[Estadísticas de Agentes#Poder\|POD]]**  | **[[Estadísticas de Agentes#Cognición\|COG]]** | **[[Estadísticas de Agentes#Suerte\|SUE]]** |
+| :-----------------------------------------------: | :---------------------------------------------: | :-------------------------------------------: | :------------------------------------------: | :--------------------------------------------: | :-----------------------------------------: |
+|                                                   |                                                 |                                               |                                              |                                                |                                             |
+|     **[[Estadísticas de Agentes#Salud\|HP]]**     | **[[Estadísticas de Agentes#Movimiento\|MOV]]** | **[[Estadísticas de Agentes#Evasión\|EVA]]**  | **[[Estadísticas de Agentes#Cordura\|COR]]** |     **[[Estadísticas de Agentes#PA\|PA]]**     |                                             |
+|                                                   |                                                 |                                               |                                              |                                                |                                             |
 
 | **Característica**                                        | **Valor** |
 | :-------------------------------------------------------- | :-------: |
@@ -23,9 +23,9 @@
 # Atributos
 
 # Habilidades
-| Nombre | Efecto | Coste | CD  | Daño | Rango | Objetivo |
-| ------ | ------ | :---: | :-: | :--: | :---: | :------: |
-|        |        |       |     |      |       |          |
+| **Nombre** | **Efecto** | **Coste** | **CD** | **Daño** | **[[Rangos y Áreas#Rangos\|Rango]]** | **[[Rangos y Áreas#Áreas de Daño\|Objetivo]]** |
+| ---------- | ---------- | :-------: | :----: | :------: | :----------------------------------: | :--------------------------------------------: |
+|            |            |           |        |          |                                      |                                                |
 
 
 

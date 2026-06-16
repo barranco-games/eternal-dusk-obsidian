@@ -29,7 +29,10 @@ Es la distancia máxima que un agente se moverá al gastar un [[Estadísticas de
 | Si la DES o la FUE son igual o mayores que CON o las tres son iguales | 2 metros |
 | Si ambas DES y FUE son mayores que CON                                | 3 metros |
 ## Puntos de Acciones
-Es un recurso que los agentes usarán para realizar habilidades. El máximo que un agente puede acumular es 10. Los puntos de acción iniciales de un agente son 4 y tendrá una bonificación de:
+Es un recurso que los agentes usarán para realizar habilidades. El máximo que un agente puede acumular es 10. Los puntos de acción iniciales de un agente son 4 y tendrá una bonificación que variará en función de sus estadísticas principales.
+La recuperación de Puntos de Acción por turno será de 2 de base más el bonificador.
+
+### Bonificador:
 
 | COG + POD | Cantidad |
 | --------- | -------- |
@@ -38,6 +41,7 @@ Es un recurso que los agentes usarán para realizar habilidades. El máximo que 
 | 85–124    | 2        |
 | 125–164   | 3        |
 | 165–200   | 4        |
+
 # **Características**
 
 - **Descubrir**: Encontrar objetos, escuchar. ^descubrir
@@ -47,7 +51,7 @@ Es un recurso que los agentes usarán para realizar habilidades. El máximo que 
 - **Lanzar**: Define el rango y la precisión de un agente al arrojar un arma u objeto. ^lanzar
 - **Subterfugio**: Desarmar trampas, abrir cerraduras. ^subterfugio
 - **Medicina**: Aumenta la eficacia de los medicamentos. ^medicina
-- **Perspicacia**: Entender estado de un personaje e intenciones . ^perspicacia
+- **Perspicacia**: Entender el estado de un personaje y sus intenciones . ^perspicacia
 - **Intimidar**: ^intimidar
 - **Persuadir**: ^persuadir
 - **Engaño**: ^enganio
