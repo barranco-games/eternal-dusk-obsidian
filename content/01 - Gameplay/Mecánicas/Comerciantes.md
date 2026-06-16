@@ -1,5 +1,5 @@
 # Armero
-Venderá municiones, armas, equipo y reparará el equipo y las armas.
+Venderá municiones, armas y equipo.
 Comprará el mismo tipo de objetos.
 Comercia con [[Economía#Chatarra/Minerales|Chatarra]].
 # Doctor

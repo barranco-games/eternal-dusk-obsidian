@@ -28,7 +28,7 @@ Además se les recompensa con una tirada de recuperación de cordura si han cump
 
 En nuestro sistema se usa La Llamada de Cthulhu como base.
 Al acabar investigaciones (dependiendo de su tamaño a lo mejor son 3 más pequeñas o una principal), se recompensa al jugador dejándole hacer una [[Dados#Tiradas de Mejora|Tirada de Mejora]] en dos [[Estadísticas de Agentes#**Características**|Características]] por personaje.
-En cuanto a estadísticas principales y secundarias solo pueden ser alteradas por [[Pactos (Whishlist)|Pactos]] o [[Equipamiento#Trinkets|Trinkets]].
+En cuanto a estadísticas principales y secundarias solo pueden ser alteradas por [[Pactos (Wishlist)|Pactos]] o [[Equipamiento#Trinkets|Trinkets]].
 # Habilidades de Agentes
 Al acumular el suficiente [[Party#Mythos|Mythos]] obtendrán un punto para asignar en cualquiera de sus habilidades. 
 No todas las opciones de mejoras estarán disponibles desde el principio para no abrumar a los jugadores. Se irán desbloqueando en función del nivel de [[Party#Mythos|Mythos]] y el progreso de las quests personales de los miembros de la [[Party]].

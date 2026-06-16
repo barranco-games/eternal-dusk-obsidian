@@ -3,12 +3,6 @@ El grupo se puede dividir y manejar a los integrantes en pequeños grupos o indi
 Al pasar a una zona nueva la party se volverá a unir.
 Los miembros de la party solo se pueden cambiar desde la [[Campamento]].
 La party puede tener valores que representen: 
-# Relación con facciones (Opcional)
-[[Dados#Ventaja y Desventaja|Ventaja/Desventaja]] o Bonus para tiradas en diálogos
-Mejores tiendas
-Diferentes comentarios emergentes
-Posibilidad de bloquear o desbloquear misiones
-Visitas/Eventos en la caravana
 # Mythos
 Es una estadística oculta que no se le mostrará al jugador. Al ver una entidad de Mito, tener contacto con una, leer libros de conocimiento prohibido... se aumentará la estadística. Cada vez que se pase cierto umbral se desbloqueará un punto de para mejorar los personajes. 
 
@@ -17,7 +11,7 @@ Es una estadística oculta que no se le mostrará al jugador. Al ver una entidad
 Cualquier punto de locura provocado por un trauma relacionado con los Mitos (por ejemplo, un monstruo de los Mitos o un tomo de los Mitos bajo los efectos de un hechizo de los Mitos) hace que aumente la habilidad «Mitos de Cthulhu». La primera vez que se sufra locura relacionada con los Mitos de esta forma, se añaden 5 puntos a la habilidad «Mitos de Cthulhu». (Lo que reduce la cordura máxima)
 >Cualquier locura adquirida debido a futuros traumas provocados por el mito da lugar a la suma de 1 punto por cada caso.
 
-# Estado de ánimo 
+# Estado de ánimo (Wishlist)
 Dependerá de los [[Descansos|Descansos]] en el [[Campamento]] y su [[Estadísticas de Agentes#Cordura|Cordura]]. Obtendrán distintos buffos o penalizaciones dependiendo de este. 
 # Stats Grupales
 Media de una [[Estadísticas de Agentes|Estadística]] en concreto de todos los integrantes de la party.

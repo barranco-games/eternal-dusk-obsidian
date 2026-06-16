@@ -1,5 +1,5 @@
-Cada agente tiene una [[Estadísticas de Agentes#Suerte|Estadística de Suerte]] que puede ser consumida para pasar la tirada. Gastar suerte no podrá ser utilizado para conseguir un [[Dados#Críticos|Crítico]] o evitar una [[Dados#Pifias|Pifia]] ya que depende del resultado original del [[Dados|Dado]].
-La [[Party]] tendrá una [[Estadísticas de Agentes#Suerte|Suerte]] conjunta (La media) esta afecta a tiradas al encontrar loot, descubrir secretos... (que venga el forastero)
+Cada agente tiene una [[Estadísticas de Agentes#Suerte|Estadística de Suerte]] que puede ser consumida para pasar la tirada. Gastar suerte no podrá ser utilizado para conseguir un [[Dados#Críticos|Crítico]] o evitar una [[Dados#Pifias|Pifia]] ya que dependen del resultado original del [[Dados|Dado]].
+La [[Party]] tendrá una [[Estadísticas de Agentes#Suerte|Suerte]] conjunta (La media) esta afecta a tiradas al encontrar loot, descubrir secretos...
 # Empujar Suerte
 Cuando un PJ hace una [[Dados#Tiradas de Estadísticas|Tirada]] podrá gastar [[Estadísticas de Agentes#Suerte|Suerte]] para llegar al [[Dados#Nivel de Éxito|Umbral]] necesario para superar la dificultad establecida. Un punto de esta estadística representa un número del dado, es decir si te faltan 15 puntos para pasar una tirada, el agente puede consumir 15 de sus puntos de [[Estadísticas de Agentes#Suerte|Suerte]] para pasarla.
 # Recuperar Suerte

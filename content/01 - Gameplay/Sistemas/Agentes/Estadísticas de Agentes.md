@@ -18,7 +18,7 @@ Es la cantidad de daño que un agente podrá aguantar antes de morir. Cada agent
 - Fórmula para calcular la vida máxima, el resultado se redondeará hacia abajo: 
  base +  [[Estadísticas de Agentes#Constitución|Constitución]]/8.
 ## Cordura
-La cordura representa el estado mental del agente, es un recurso que se podrá usar para pagar el coste de algunas habilidades, el máximo es 100 puntos. La cordura inicial es igual al [[Estadísticas de Agentes#Poder|Poder]]. 
+La cordura representa el estado mental del agente, es un recurso que se podrá usar para pagar el coste de algunas habilidades, el máximo es 100 puntos. La cordura inicial y máxima por agente es igual a su [[Estadísticas de Agentes#Poder|Poder]]. 
 ## Evasión
 Permite al agente esquivar golpes o ataques que vea contra el. Se calcula como la mitad de la [[Estadísticas de Agentes#Destreza|Destreza]] redondeada hacia arriba.
 ## Movimiento
@@ -30,7 +30,7 @@ Es la distancia máxima que un agente se moverá al gastar un [[Estadísticas de
 | Si ambas DES y FUE son mayores que CON                                | 3 metros |
 ## Puntos de Acciones
 Es un recurso que los agentes usarán para realizar habilidades. El máximo que un agente puede acumular es 10. Los puntos de acción iniciales de un agente son 4 y tendrá una bonificación que variará en función de sus estadísticas principales.
-La recuperación de Puntos de Acción por turno será de 2 de base más el bonificador.
+La recuperación de Puntos de Acción por [[Turnos|Turno]] será igual a sus iniciales.
 
 ### Bonificador:
 
@@ -47,14 +47,14 @@ La recuperación de Puntos de Acción por turno será de 2 de base más el bonif
 - **Descubrir**: Encontrar objetos, escuchar. ^descubrir
 - **Rastrear**: Seguir huellas, encontrar rastros. ^rastrear
 - **Sigilo**: Ocultarse, pasar desapercibido. ^sigilo
-- **Ocultismo**: Entender textos prohibidos, lore Mythos... ^ocultismo
+- **Ocultismo**: Entender textos prohibidos, lore, ritos... ^ocultismo
 - **Lanzar**: Define el rango y la precisión de un agente al arrojar un arma u objeto. ^lanzar
 - **Subterfugio**: Desarmar trampas, abrir cerraduras. ^subterfugio
-- **Medicina**: Aumenta la eficacia de los medicamentos. ^medicina
+- **Medicina**: Aumenta la eficacia de los medicamentos y comprender el estado físico. ^medicina
 - **Perspicacia**: Entender el estado de un personaje y sus intenciones . ^perspicacia
-- **Intimidar**: ^intimidar
-- **Persuadir**: ^persuadir
-- **Engaño**: ^enganio
+- **Intimidar** ^intimidar
+- **Persuadir** ^persuadir
+- **Engaño** ^enganio
 
 ### Bonificador de Medicina
 Se añadirá un valor fijo a las tiradas relacionadas con medicamentos en función de la [[Estadísticas de Agentes#^medicina|Medicina]] del agente.
@@ -68,13 +68,13 @@ Se añadirá un valor fijo a las tiradas relacionadas con medicamentos en funci�
 
 ^tabla-bm
 ### Rango Lanzamientos
-La distancia a la que podrá tirar objetos lanzables dependerá de su habilidad de [[Estadísticas de Agentes#^lanzar|Lanzamiento]].
+La distancia a la que podrá arrojar objetos lanzables dependerá de su habilidad de [[Estadísticas de Agentes#^lanzar|Lanzamiento]].
 
-| **Lanzar** | **Distancia**                               |
-| ---------- | ------------------------------------------- |
-| 0 - 30     | [[Rangos y Áreas#^tabla-rangos\|Cerca]]     |
-| 31 - 60    | [[Rangos y Áreas#^tabla-rangos\|Media]]     |
-| 61 - 85    | [[Rangos y Áreas#^tabla-rangos\|Lejos]]     |
-| 86 - 100   | [[Rangos y Áreas#^tabla-rangos\|Muy Lejos]] |
+| **Lanzar** | **Distancia** |
+| ---------- | ------------- |
+| 0 - 30     | 2.5m          |
+| 31 - 60    | 5m            |
+| 61 - 85    | 7.5m          |
+| 86 - 100   | 10m           |
 
 ^tabla-lanzar

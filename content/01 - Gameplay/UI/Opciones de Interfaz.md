@@ -17,5 +17,4 @@ Al jugador se le dan las siguientes opciones de mostrar el popup de suerte:
 - Solo mostrar el popup cuando la suerte necesaria sea menos de x (establecida por el jugador).
 - No mostrar nunca el popup.
 
-<span style="background:rgba(173, 239, 239, 0.55)">¿Sigue siendo válido?</span>
 

@@ -1,5 +1,4 @@
 El jugador podrá hacer que su grupo tenga un descanso, este recuperará la salud máxima del equipo.
-El [[Equipamiento]] se reparará por el [[Campamento#^armero|Armero]].
 Solo se puede hacer un descanso cuando haya pasado 1 [[Tiempo|Día]] desde el último descanso.
 Al descansar se avanzarán 1 [[Tiempo|Día]].
 El descanso solo se puede realizar desde el [[Campamento]].
