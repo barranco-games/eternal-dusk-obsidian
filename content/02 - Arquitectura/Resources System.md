@@ -9,63 +9,6 @@ The system operates at two levels:
 
 ---
 
-## Folder Structure
-
-```
-Core/
-└── Resources/
-    ├── IResource.cs
-    ├── IBoundedResource.cs
-    ├── IResourceHolder.cs
-    ├── ResourceType.cs
-    ├── ResourceSet.cs
-    └── ResourceState.cs
-
-Gameplay/
-└── Resources/
-    ├── Resource.cs
-    ├── BoundedResource.cs
-    └── Implementations (Health, Sanity, Ammunition...)
-
-Systems/
-└── Resources/
-    ├── ActorResources.cs
-    ├── SimulatedResourceSet.cs
-    └── SerializableResourceEntry.cs
-```
-
----
-
-## Layer Responsibilities
-
-### Core
-Pure C#. Contains contracts, the resource type enum, and value-type data structures only.
-
-Contracts:
-- `IResource` — the minimal contract: `Type`, `Current`, `CanConsume`, `Consume`, `Add`, `SetCurrent`, and the `OnChanged` / `OnDepleted` events
-- `IBoundedResource` — extends `IResource` with `Max`, `Ratio`, `IsFull`, `SetToMax`, `ClampToMax`, and the `OnFilled` event
-- `IResourceHolder` — the unified access point for an actor's resources; exposes per-type and `ResourceSet`-based consume, restore, and query operations
-
-Data:
-- `ResourceType` — byte-backed enum; values are used as array indices throughout the system; `None = 0` is a reserved sentinel
-- `ResourceSet` — an immutable value type expressing a multi-resource cost or yield; built with `With` / `Merge`; exposes `RawAmounts` as a `ReadOnlySpan<int?>` for allocation-free iteration
-- `ResourceState` — a value-type snapshot of a single resource's current and max values; used by the simulation layer and the state cache; exposes `CanAfford`, `WithConsumed`, and `WithRestored`
-
-### Gameplay
-Depend on Core. Concrete resource types live here.
-
-- `Resource` — abstract base implementing `IResource`; handles `OnChanged` and `OnDepleted` event dispatch; clamps current to zero minimum
-- `BoundedResource` — abstract base extending `Resource` and implementing `IBoundedResource`; accepts a `Func<int>` for `Max` so it can scale with stats; handles `OnFilled` dispatch and clamping
-
-### Systems
-Infrastructure layer. Depends on Core and Gameplay.
-
-- `ActorResources` — implements `IResourceHolder`; owns the live `IResource[]` indexed by `ResourceType`; maintains a dirty-flagged `ResourceState` cache rebuilt on demand
-- `SimulatedResourceSet` — a mutable value-type snapshot used exclusively by planning and AI; populated from `ActorResources` via `IResourceHolder.GetAllStates()`; supports the same consume and restore operations as `IResourceHolder` without touching live state
-- `SerializableResourceEntry` — a flat serializable struct carrying `ResourceType` and `Amount`; used by the save system when persisting resource values
-
----
-
 ## Key Concepts
 
 ### Layered types
@@ -189,18 +132,3 @@ _resources.Register(Health.Create(() => stats.Get(StatType.MaxHealth)));
 ```
 
 No other changes are required. `ResourceSet.Capacity`, the state cache, and `SimulatedResourceSet` all derive their size from the enum at runtime.
-
----
-
-## Classes at a Glance
-
-| Class                       | Layer    | Relation with ActorResources      |
-| --------------------------- | -------- | --------------------------------- |
-| `Health`                    | Gameplay | Can be registered once per actor  |
-| `ActionPoints`              | Gameplay | Can be registered once per actor  |
-| `Sanity`                    | Gameplay | Can be registered once per actor  |
-| `ActorResources`            | Systems  | Is the holder                     |
-| `SimulatedResourceSet`      | Systems  | Planning only, value type         |
-| `SerializableResourceEntry` | Systems  | Save data only                    |
-| `ResourceSet`               | Core     | Value type, cost/yield expression |
-| `ResourceState`             | Core     | Value type, snapshot              |
