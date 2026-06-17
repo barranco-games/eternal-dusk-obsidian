@@ -21,4 +21,4 @@ Mujer de unos 25 - 30 años. Atlética, viste el uniforme de los mercenarios mod
 - 
 # **Relaciones**
 - [[04 - Narrativa/Personajes/Party/Lorenzo|Lorenzo]]
-## **[[03 - Entidades/Agentes/Party/Louise-Lloys Viper|Estadísticas]]**
+## **[[03 - Entidades/Agentes/Party/Veronica Viper|Estadísticas]]**

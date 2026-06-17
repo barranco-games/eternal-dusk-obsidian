@@ -26,7 +26,7 @@ Se ganan un par de pistas y a partir de este punto el juego se abre más. Posibl
 
 Para continuar la historia los jugadores tienen la opción de ir a dos ciudades distintas en el orden que quieran.
 
-# Megatón ()
+# Megatón (Obsoleto)
 
 - Han encontrado pruebas de que Makabel está en la zona
 - Intentan conseguir pistas sobre el ritual de los extremistas del sol e intentar predecir sus movimientos
@@ -34,7 +34,7 @@ Para continuar la historia los jugadores tienen la opción de ir a dos ciudades 
 - Hay que encontrar el origen y destruirlo/dárselo al asentamiento
 - Boss Líder2
 
-# Solitude ()
+# Solitude (Obsoleto)
 
 - Vienes buscando a Makabel
 - Ha empezado un conflicto

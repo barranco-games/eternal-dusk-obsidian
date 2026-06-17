@@ -21,7 +21,8 @@
 | **[[Estadísticas de Agentes#^enganio\|Engaño]]**          |    35     |
 # [[04 - Narrativa/Personajes/Party/Colt Egon|Descripción]]
 # Atributos
-
+- Probabilidad de hacer perder [[Estadísticas de Agentes#Cordura|Cordura]] a los agentes humanos
+- No puede usar [[Armas]] a dos manos.
 # Habilidades
 | Nombre                      | Efecto                                                                                                                                                                                                                                                                       |                        Coste                         | CD  | Daño |  **[[Rangos y Áreas#Rangos\|Rango]]**   | **[[Rangos y Áreas#Áreas de Daño\|Objetivo]]** |
 | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------: | :-: | :--: | :-------------------------------------: | :--------------------------------------------: |

@@ -1,21 +1,19 @@
 # **Trasfondo**
 Ciudad central y más grande de la región y centro neurálgico del comercio. La controlan los mercenarios y tenía minas ricas en minerales debajo suya.
-
-Prohibición de armas.
-# **Puntos de Interés**
-- Cuartel Mercenarios/Entrada a las minas/Refinerías antiguas^
-- Iglesia del Sol*
-- Cuartel de los Alquimistas*
-- Establos/Caravana^
-- Entrada a la Ciudad^
-- Taberna*
-- Plaza Mercado^
+# **Áreas**
+- [[Calle Principal]]
+- [[Barrio Minero]]
+- [[Barrio Amurallado]]
+- [[Del' Toyah]]
 # **Trama**
 El grupo llega persiguiendo a lider1.
 # **Misiones Principales**
-- 
+- [[Encuentra la fuente de la droga]]
 # **Misiones Secundarias**
 - 
 # **Personajes Relevantes**
-- 
+- Makabel 
+- Líder 1
+- Líder 2
+- Líder 3
 
