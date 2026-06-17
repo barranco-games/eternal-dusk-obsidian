@@ -25,7 +25,7 @@ Following a command's execution, the **Command Executor** immediately triggers t
 - Persist quest state and integrate with external game systems (save/load, dialogue, combat...)
 
 ---
-## 2. Key Concepts
+## 2. Core Concepts
 
 - **Query (World Abstraction):** It is the central data abstraction of the system. A `Query` identifies a specific data point somewhere in the world (e.g., Player Weapon Type, ammo, Kill Count of a specific enemy, Quest Progress) but does **not** contain the value itself. It only describes _what_ to locate.
 
@@ -135,7 +135,18 @@ An objective tracks state through explicit lifecycles: `Pending`, `Active`, `Com
 
 ### 6.2. Create a new Objective
 
-Empty
+To create a new objective, you must inherit from an abstract base class in the domain that defines the node, and its evaluation will depend entirely on the resolution of the associated conditions using data from the QuestCatalog at runtime.
+
+``` c#
+public abstract class ObjectiveNode
+{
+    public string Id { get; init; }
+    public List<string> PrerequisiteNodeIds { get; init; } = new();
+    public List<string> MutuallyExclusiveObjectiveIds { get; init; } = new();
+    public bool IsOptional { get; init; }
+    public ICondition Condition { get; init; }
+}
+```
 
 ---
 ## 7. Quests
@@ -151,30 +162,63 @@ When an objective completes:
 
 ### 7.1. Create a new Quest
 
-Empty
+```C#
+[CreateAssetMenu(menuName = "EternalDusk/Quests/Quest Definition")]
+public class QuestDefinitionSO : ScriptableObject
+{
+    [SerializeField] private string _questId;
+    [SerializeField] private List<ObjectiveNodeData> _nodes;
+    [SerializeField] private List<CommandDescriptor> _rewards;
+
+    public QuestRuntimeState ConvertToRuntimeState()
+	    => new QuestRuntimeState(_questId, _nodes.Select(n => n.ToDomainNode()));
+}
+```
 
 ---
-## 8. Player Actions
+## 8. Player Actions (Commands)
 
-Actions modify the world. Unlike conditions, actions are write operations.
+Player actions are pure write operations that modify the game state. Any action relevant to the game world is modeled as a pure C# command that implements the ICommand interface.
 
-Examples:
+The mission system does not generate these actions; it reacts to them synchronously and immediately through the CommandExecutor.
+### 8.1. Anatomy of an Action (ICommand)
 
-```text
-Player pick Revolver.
+An action encapsulates the data necessary to execute the modification, but it does not contain Unity logic or references to scene components.
 
-Player enter first time to Saloon.
+```C#
+public interface ICommand 
+{
+    void Execute(ICommandContext context);
+}
+
+public record PickUpWeaponAction(string WeaponId) : ICommand 
+{
+    public void Execute(ICommandContext context) 
+    {
+        context.Inventory.AddItem(WeaponId);
+    }
+}
+
+public record EnterZoneAction(string ZoneId) : ICommand 
+{
+    public void Execute(ICommandContext context) 
+    {
+        context.WorldState.SetFlag($"Visited_{ZoneId}", true);
+    }
+}
 ```
 
-All actions target a `Query`.
+### 8.2. Execution Flow
 
-Example:
+To maintain decoupling, the **Gameplay** layer (physics, Unity triggers, UI) is responsible for instantiating and sending these actions to the central executor.
 
-```csharp
-new ModifyValueAction(playerHealthQuery, 20);
-```
-
-This keeps the action system independent of gameplay implementations.
+1. **Trigger (Gameplay):** The player enters the invisible Saloon trigger in Unity.
+2. **Instantiation:** The trigger script creates the action: `new EnterZoneAction(“Saloon”)`.
+3. **Synchronous Processing:**
+    - The `CommandExecutor` receives the action.
+    - The action is executed by modifying the state via the `ICommandContext`.
+    - **Immediately in the same frame**, the `CommandExecutor` calls `QuestEvaluator.Evaluate()`.
+    - The evaluator uses the `QueryResolver` to check if any active quests required `Visited_Saloon` to be `true`.
 
 ---
 ## 9. Evaluation Flow
@@ -188,9 +232,9 @@ QuestEvaluator (System)
     │     │
     │     ├──► Iterative Node Traversal (Resolves Parallel, Optional & Prereqs)
     │     │     │
-    │     │     └──► Resolves Node Conditions via QueryResolver (System)
+    │     │     └──► Resolves Node Conditions via QueryResolver
     │     │           │
-    │     │           └──► Pulls data from Concrete Subsystems (Gameplay)
+    │     │           └──► Pulls data from Concrete Subsystems
     │     │
     │     └──► Processes Mutual Exclusion Rules (Forces instantaneous propagation)
     │
