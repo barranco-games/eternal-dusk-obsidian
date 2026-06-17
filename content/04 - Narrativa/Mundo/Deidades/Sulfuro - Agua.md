@@ -7,4 +7,4 @@
 # **Simbología**
 
 # **Facción**
-- [[Megatón]]
+- [[Megatón (Obsoleto)]]

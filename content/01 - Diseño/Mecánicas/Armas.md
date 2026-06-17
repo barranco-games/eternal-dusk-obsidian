@@ -10,6 +10,7 @@ Las armas afectarán directamente a la habilidad de disparo de la entidad tienen
 	- **Precisa:** Se le añade [[Estadísticas de Agentes#Destreza|Destreza]].  
 - **Tasa de Acierto:** (25 + **Tipo**/2)% ^tasa-acierto
 - **Tirada de Fallo**: Es el resultado de la [[Dados#Tiradas de Estadísticas|Tirada]] hará que el arma se pueda encasquillar, teniendo que gastar [[Estadísticas de Agentes#Puntos de Acciones|PA]] para desencasquillarla. Esto solo se aplica a las armas de fuego. ^tirada-fallo
+- **Manejo:** Indica si el arma se puede usar con una o dos manos. ^manos
 # Bonificadores de Daño (BD)
 La bonificación de daño se calcula según el **[[Armas#^armas-tipo|Tipo]]** del arma.
 

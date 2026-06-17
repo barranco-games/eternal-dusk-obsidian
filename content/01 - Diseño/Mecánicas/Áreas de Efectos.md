@@ -1,5 +1,6 @@
 - **Fuego:** Aplicará [[Estados#^quemado\|Quemado]] por 2 turnos a las entidades que entren al área a no ser que superen una [[Dados#Tiradas de Estadísticas\|Tirada de Constitución]]. ^fuego
 - **Humo:** Todas las entidades que se encuentren en el área serán [[Estados#^ceguera\|Cegados]] pero se considerarán [[Estados#^oculto\|Ocultos]]. ^humo
+- **Abrojos:** Los objetivos que pasen por el área tendrán que superar una [[Dados#Tiradas de Estadísticas|Tirada de Constitución]] por metro avanzado o recibirá un stack de [[Estados#^san|Sangrado]] durante dos [[Turnos]]. ^abrojos
 
 Ejemplo: [Áreas Divinity 2](https://divinityoriginalsin2.wiki.fextralife.com/Environmental+Effects)
 1. Fuego

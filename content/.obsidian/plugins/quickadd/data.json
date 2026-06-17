@@ -430,7 +430,7 @@
               "setFileExistsBehavior": false
             }
           ],
-          "collapsed": false
+          "collapsed": true
         },
         {
           "id": "c34e5617-9c5e-4cf7-9c62-e2ab54500a4c",
@@ -476,6 +476,45 @@
             "enabled": true,
             "folders": [
               "04 - Narrativa/Mundo/Deidades"
+            ],
+            "chooseWhenCreatingNote": false,
+            "createInSameFolderAsActiveFile": false,
+            "chooseFromSubfolders": false
+          },
+          "appendLink": false,
+          "openFile": true,
+          "fileOpening": {
+            "location": "tab",
+            "direction": "vertical",
+            "mode": "default",
+            "focus": true
+          },
+          "fileExistsMode": "Increment the file name",
+          "setFileExistsBehavior": false
+        }
+      ],
+      "collapsed": true
+    },
+    {
+      "id": "2a6396af-99d3-49fd-91f6-39d1b43d0476",
+      "name": "Misiones",
+      "type": "Multi",
+      "command": false,
+      "choices": [
+        {
+          "id": "25e633a0-9c99-41e4-aa7f-d3cb608c5130",
+          "name": "Misión Principal",
+          "type": "Template",
+          "command": false,
+          "templatePath": "Plantillas/Misiones/Misión.md",
+          "fileNameFormat": {
+            "enabled": false,
+            "format": ""
+          },
+          "folder": {
+            "enabled": true,
+            "folders": [
+              "05 - Misiones/Pricipales"
             ],
             "chooseWhenCreatingNote": false,
             "createInSameFolderAsActiveFile": false,

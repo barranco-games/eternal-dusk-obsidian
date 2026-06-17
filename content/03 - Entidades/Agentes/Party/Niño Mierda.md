@@ -21,12 +21,9 @@
 | **[[Estadísticas de Agentes#^enganio\|Engaño]]**          |    35     |
 # [[04 - Narrativa/Personajes/Party/Niño Mierda|Descripción]]
 # Atributos
-- Máximo de Puntos Acción Ampliado
 - Extra daño a Abominaciones de oro
 - No tiene desventajas al estar agachado
-- No puede usar armas
-
-
+- No puede usar [[Armas|Armas de Fuego]]
 # Habilidades
 | Nombre           | Efecto                                                                                                                                                                                                                                                                |                        Coste                         | CD  | Daño |  **[[Rangos y Áreas#Rangos\|Rango]]**   | **[[Rangos y Áreas#Áreas de Daño\|Objetivo]]** |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------: | :-: | :--: | :-------------------------------------: | :--------------------------------------------: |
