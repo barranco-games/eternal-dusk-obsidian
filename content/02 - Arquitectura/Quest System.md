@@ -1,4 +1,4 @@
-## Overview
+## 1. Overview
 
 The **Quest System** is a synchronous, command-driven system designed under Clean Architecture principles. Player actions instantiate pure C# commands (`ICommand`) processed by the **Command Executor**. This executor utilizes an `ICommandContext`—an interface bridge that grants direct access to mutable game systems like the _World State_ and _Inventory_ without coupling the core logic to the Unity Engine.
 
@@ -9,14 +9,14 @@ The architecture strictly separates **Static Data** from **Runtime State**:
 - **The Quest Journal:** A pure C# runtime structure storing active, serializable quest instances and their current progress.
 
 Following a command's execution, the **Command Executor** immediately triggers the **Quest Evaluator** in the same frame. Each Quest transitions through defined states (_Inactive → Active → Completed / Failed / Skipped_) by delegating state evaluation to polimorphic, abstract objectives. Objectives manage their own lifecycle (_Pending → Active → Completed / Skipped / Failed_). Once all objectives hit the completed state, the evaluator triggers the quest's abstract rewards, applying modifications back into the game world through the context.
-### Design Goals
+### 1.1. Design Goals
 
 - Asset-based identity over strings.
 - Entity lifecycle independence.
 - Designer-navigable in the Inspector.
 - World state as the source of truth.
 - No dependency on MonoBehaviours or scene hierarchy.
-### Functional Requirements
+### 1.2. Functional Requirements
 
 - Support linear and non-linear quest structures.
 - Allow multiple simultaneous active objectives within a single quest.
@@ -25,67 +25,7 @@ Following a command's execution, the **Command Executor** immediately triggers t
 - Persist quest state and integrate with external game systems (save/load, dialogue, combat...)
 
 ---
-## Folder Structure
-
-```text
-├── Core/
-│   ├── Quests/Interfaces/
-│   │   ├── ICommand.cs
-│   │   ├── ICommandContext.cs
-│   │   ├── ICondition.cs
-│   │   └── IQuestService.cs
-│   ├── Quests/Runtime/
-│   │   ├── QuestInstance.cs
-│   │   ├── ObjectiveProgress.cs
-│   │   └── Query.cs
-│   └── Quests/Enums/
-│       ├── QuestState.cs
-│       └── ObjectiveState.cs
-│
-├── Engine/
-│	├── Quests/Definitions/
-│	│   ├── QuestDefinition.cs
-│	│   ├── ObjectiveDefinition.cs
-│	│   ├── AbstractCondition.cs
-│	│   └── AbstractReward.cs
-│	├── Quests/MonoBehaviours/
-│	│   ├── QuestJournalUI.cs
-│	│   ├── QuestTriggerZone.cs
-│	│   └── QuestInstaller.cs
-│	│ 
-│	└── Quests/Implementations/
-│		├── ConcreteObjectives/
-│		└── ConcreteRewards/
-│
-├── Gameplay/Quests/
-│   ├── CommandExecutor.cs
-│   ├── QuestService.cs
-│   ├── QueryResolver.cs
-│   ├── QuestJournal.cs
-│   ├── QuestCatalog.cs
-│   └── QuestEvaluator.cs
-│
-└── System/
-```
-
----
-## Layer Responsibilities
-
-### Core Layer (Pure C# - Unity-Independent)
-* **Contents:** Structural interfaces (`ICommand`, `ICommandContext`, `IInventory`, `IWorldState`), pure data entities (`Quest`, `Objective`), and enumerators.
-* **Rule:** No use of `using UnityEngine;`. This layer contains pure business logic. It can be 100% tested using native C#.
-* **Change from the previous design:** State classes (`Quest` and `Objective`) do not store direct references to `ScriptableObjects`. Instead, they use flat data structures or IDs to link to each other.
-
-### Gameplay Layer (Pure C# / Control Logic)
-* **Contents:** `CommandExecutor`, `QuestEvaluator`, and the logical implementation of the quest service (`QuestService`).
-* **Rule:** Receives primitive data and orchestrates when a command is executed and when a quest is evaluated. It remains independent of Unity (does not inherit from `MonoBehaviour`).
-
-### Engine Layer (Unity-Dependent)
-* **Contents:** Concrete implementation of `ScriptableObjects` (`QuestDefinition`, `Condition`, `Reward`), Unity event listeners (3D Triggers, Collisions), and classes that inherit from `MonoBehaviour` to render the Journal UI on the player’s screen.
-* **Rule:** This is the only layer authorized to interact with the Unity API. It translates Unity actions into Core commands.
-
----
-## Key Concepts
+## 2. Key Concepts
 
 - **Query (World Abstraction):** It is the central data abstraction of the system. A `Query` identifies a specific data point somewhere in the world (e.g., Player Weapon Type, ammo, Kill Count of a specific enemy, Quest Progress) but does **not** contain the value itself. It only describes _what_ to locate.
 
@@ -93,50 +33,75 @@ Following a command's execution, the **Command Executor** immediately triggers t
 
 - **Synchronous Command-Driven Evaluation:** The system does not rely on continuous update loops or decoupled asynchronous events. Every player action is an `ICommand`. The moment the `CommandExecutor` runs a command, it immediately evaluates the active quests and catalog requirements. This ensures 100% determinism.
 
-- **Immutable Definition vs. Serializable Runtime State:**
-
-	- **Definitions (`ScriptableObjects`):** Read-only data assets created in the Unity Editor that describe the blueprints of quests, rewards, and conditions.
-
-    - **Instances (`Pure C# Classes`):** Light, mutable, and fully serializable data structures that live in memory during runtime to track player progress.
-
-- **Polymorphic Evaluation:** The Core engine knows absolutely nothing about specific gameplay mechanics (like "kill 10 enemies" or "talk to Colt"). It only manages states. The concrete victory or progression logic is entirely delegated to abstract implementations (`ICondition`), allowing designers to create new types of content without touching a single line of core code.
 
 ---
-## Centralized Execution Flow
+## 3. Centralized Execution Flow
 
 ```
-Player Action (Unity)
+Player Action triggers Unity Input / UI Event
         │
         ▼
- ICommand instance
+Instantiates concrete ICommand
         │
         ▼
- CommandExecutor.Execute(command)
+CommandExecutor.Execute(command)
         │
         ▼
- command.Apply(context)
+command.Execute(ICommandContext)
         │
         ▼
- Changes to WorldState / Inventory / etc.
+Changes to WorldState / Inventory / etc.
         │
         ▼
- QuestEvaluator.Evaluate(...)
+CommandExecutor invokes QuestEvaluator.Evaluate()
         │
         ▼
- QuestState update
+QuestJournal State is updated
         │
         ▼
- ObjectiveState update
-        │
-        ▼
- Rewards / completion / unlocks
+If Quest completes -> CommandExecutor dispatches Reward Commands
 ```
 
 ---
+## 4. Query 
 
-### Conditions
+An `Query` is simply a type marker containing data properties.
 
-Conditions are predicates evaluated against world state. Every objective ultimately evaluates one or more conditions.
+### 4.1. Query Resolver
+
+The `QueryResolver` maps query data configurations to concrete runtime evaluations without exposing the underlying systems directly to the domain.
+
+### 4.2. Adding a new Query
+
+To add a new query to the system, follow these 3 steps across the layers:
+
+1. **Core/Domain:** Define the immutable query record.
+
+```
+public record HasDiscoveredZoneQuery(string ZoneId) : IQuery<bool>;
+```
+
+2. **Gameplay / System Boundary:** Implement the handler that reads from the concrete subsystem.
+
+```
+
+public class HasDiscoveredZoneHandler : IQueryHandler<HasDiscoveredZoneQuery, bool>
+{
+    private readonly IExplorationSubsystem _explorationSystem;
+
+    public HasDiscoveredZoneHandler(IExplorationSubsystem explorationSystem)
+	    => _explorationSystem = explorationSystem;
+
+    public bool Execute(HasDiscoveredZoneQuery query)
+	    => _explorationSystem.IsZoneDiscovered(query.ZoneId);
+}
+```
+
+3. **System:** Register the handler into the `QueryResolver` instance during Bootstrapping.
+
+## 5. Conditions
+
+Conditions bind an `Query` to a static evaluation rule using a comparison operator and a target literal value.
 
 Example:
 
@@ -147,77 +112,35 @@ Player.Health >= 50
 becomes:
 
 ```csharp
-new Condition(
-    playerHealthQuery,
-    ComparisonOperator.GreaterOrEqual,
-    50);
+new Condition(playerHealthQuery, ComparisonOperator.GreaterOrEqual, 50);
 ```
 
-Conditions are read-only. Never modify the world.
+### 5.1. Composite Conditions
+
+Complex validation conditions are assembled utilizing the Composite Pattern. These are also nested structural DTOs without self-evaluation capabilities:
+
+- **AndCondition:** True if all nested sub-conditions return true.
+- **OrCondition:** True if at least one nested sub-condition returns true.
+- **NotCondition:** Inverts the result of the nested sub-condition.
 
 ---
-### Composite Conditions
+## 6. Objectives
 
-Complex conditions are composed from simpler Conditions.
+An objective tracks state through explicit lifecycles: `Pending`, `Active`, `Completed`, `Failed`, or `Skipped`.
+### 6.1. Graph Constraints
 
-Example:
+- **Parallel Activation:** Any node whose `PrerequisiteNodeIds` are fully satisfied (`Completed`) transitions instantly from `Pending` to `Active`.
+- **Optional Nodes:** If a node has `IsOptional == true`, its failure or pending status does not block prerequisites for child nodes, nor does it block total quest completion.
+- **Mutual Exclusion:** When an objective node transitions to `Completed`, any node ID listed under its `MutuallyExclusiveObjectiveIds` is instantly forced into a `Failed` state during that exact same evaluation loop cycle.
 
-```text
-Player.Health >= 50
-AND
-Player.Stamina >= 20
-```
+### 6.2. Create a new Objective
 
-becomes:
-
-```text
-AndCondition
-├── HealthCondition
-└── StaminaCondition
-```
-
-Supported composites:
-
-- `AndCondition`
-- `OrCondition`
-- `NotCondition`
-
-Condition can be nested arbitrarily.
+Empty
 
 ---
-### Objective Evaluation
+## 7. Quests
 
-An objective is considered complete when all of its required conditions evaluate successfully.
-
-Example:
-
-```text
-Reach Village
-AND
-Own Iron Sword
-```
-
-```text
-Objective
-├── Condition
-│   └── CurrentZone == Village
-└── Condition
-    └── Inventory.IronSword >= 1
-```
-
----
-### Quest Progression
-
-Quests are evaluated sequentially.
-
-```text
-Quest
-├── Objective 1
-├── Objective 2
-└── Objective 3
-```
-
-Only active objectives are evaluated.
+A Quest definition consists of a collection of structural nodes and a set of command descriptors to trigger upon completion or failure. A Quest is structurally defined as a network of Objective Nodes.
 
 When an objective completes:
 
@@ -226,17 +149,21 @@ When an objective completes:
 3. The next objective becomes active
 4. Quest completion is checked
 
+### 7.1. Create a new Quest
+
+Empty
+
 ---
-### Player Actions (ICommand)
+## 8. Player Actions
 
 Actions modify the world. Unlike conditions, actions are write operations.
 
 Examples:
 
 ```text
-Player.Health += 20
+Player pick Revolver.
 
-Player.CurrentWeapon.Ammo += 30
+Player enter first time to Saloon.
 ```
 
 All actions target a `Query`.
@@ -244,128 +171,40 @@ All actions target a `Query`.
 Example:
 
 ```csharp
-new ModifyValueAction(
-    playerHealthQuery,
-    +20);
+new ModifyValueAction(playerHealthQuery, 20);
 ```
 
 This keeps the action system independent of gameplay implementations.
 
 ---
+## 9. Evaluation Flow
 
-### Runtime State
+The `QuestEvaluator` performs iterative evaluations over the structural topology graphs of all `Active` quests within the runtime journal.
 
-Definitions are immutable assets. Runtime progress is stored separately.
-
-```text
-QuestDefinition
-    ↓
-QuestInstance
+```
+QuestEvaluator (System)
+    │
+    ├──► Loops through Active Quests in Journal
+    │     │
+    │     ├──► Iterative Node Traversal (Resolves Parallel, Optional & Prereqs)
+    │     │     │
+    │     │     └──► Resolves Node Conditions via QueryResolver (System)
+    │     │           │
+    │     │           └──► Pulls data from Concrete Subsystems (Gameplay)
+    │     │
+    │     └──► Processes Mutual Exclusion Rules (Forces instantaneous propagation)
+    │
+    └──► Returns triggered State Mutation Commands back to CommandExecutor
 ```
 
-```text
-ObjectiveDefinition
-    ↓
-ObjectiveProgress
-```
+### 9.1. Node State Resolution Algorithm
 
-This allows:
+During a single frame evaluation pass, the state engine processes node state shifts using the following rules:
 
-- save/load support
-- quest resets
-- multiple concurrent instances
-- simulation and testing
-
----
-
-### Evaluation Flow
-
-```text
-QuestEvaluator
-    ↓
-Objective
-    ↓
-Query
-    ↓
-WorldPath
-    ↓
-IWorldPathResolver
-    ↓
-Gameplay Systems
-```
-
-The evaluator never reads gameplay systems directly.
-
-All world access is routed through the resolver abstraction.
-
----
-
-## Adding a New Query Type
-
-1. Implement `IQuery`
-2. Add evaluation logic
-3. Register it with the evaluator if required
-
-Example:
-
-```csharp
-public sealed class HasItemQuery : IQuery
-{
-    public WorldPath Path;
-    public int Amount;
-
-    public bool Evaluate(IWorldPathResolver resolver)
-    {
-        return resolver.TryGetValue(Path, out var value)
-            && value >= Amount;
-    }
-}
-```
-
-No quest code needs to change.
-
----
-
-## Adding a New World Value
-
-1. Create a new resolver implementation
-2. Register it with `WorldPathResolver`
-3. Expose the value through the world path picker
-
-Example:
-
-```text
-Player.Reputation
-
-Player.FactionRank
-
-Merchant.Disposition
-
-Companion.Loyalty
-```
-
-No quest code needs to change.
-
----
-
-## Classes at a Glance
-
-| Class                      | Layer    | Responsibility                                                                                                                  |
-| -------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `ICommand`                 | Core     | Immutable player action                                                                                                         |
-| `ICommandContext`          | Core     | An interface that displays the game's systems                                                                                   |
-| `QuestDefinition`          | Core     | Immutable quest asset                                                                                                           |
-| `ObjectiveDefinition`      | Core     | Immutable objective asset                                                                                                       |
-| `QuestInstance`            | Core     | Runtime quest state                                                                                                             |
-| `ObjectiveProgress`        | Core     | Runtime objective state                                                                                                         |
-| `Query`                    | Core     | Reference to world data                                                                                                         |
-| `ICondition`               | Core     | Condition contract                                                                                                              |
-| `ComparisonCondition`      | Core     | Numeric comparison                                                                                                              |
-| `(or, not, and) Condition` | Core     | Composite Condition                                                                                                             |
-| `QuestEvaluator`           | Systems  | Evaluates active quests                                                                                                         |
-| `QuestJournal`             | Systems  | Stores quest instances                                                                                                          |
-| `QuestCatalog`             | Systems  | Provides definitions                                                                                                            |
-| `QueryResolver`            | Systems  | Resolves query references                                                                                                       |
-| `CommandExecutor`          | System   | Receives the `ICommand` injects the `ICommandContext` into it to execute it, and then immediately triggers the `QuestEvaluator` |
-| `ModifyValueAction`        | Gameplay | Writes world values                                                                                                             |
-| `RewardExecutor`           | Gameplay | Executes rewards                                                                                                                |
+1. **Prerequisite Check:** If a node is `Pending` and all its non-optional `PrerequisiteNodeIds` are `Completed`, its state shifts to `Active`.
+    
+2. **Condition Resolution:** If a node is `Active`, its structural `Condition` configuration is extracted and passed to the `QueryResolver`. If the condition evaluates to true, the node state shifts to `Completed`.
+    
+3. **Mutual Exclusion Cascade:** If a node shifts to `Completed`, all target node IDs specified in its `MutuallyExclusiveObjectiveIds` list shift directly to `Failed`.
+    
+4. **Loop Stabilization:** Steps 1–3 repeat iteratively until no further state changes are recorded for that evaluation pass, preventing multi-frame delays or race conditions.
