@@ -8,7 +8,7 @@ La antigua refinería de la ciudad ahora convertida en un complejo amurallado do
 - Sede Alquimistas
 - Cárcel
 # **Misiones Principales**
-- 
+- [[Desapariciones en las minas]]
 # **Misiones Secundarias**
 - 
 # **Personajes Relevantes**

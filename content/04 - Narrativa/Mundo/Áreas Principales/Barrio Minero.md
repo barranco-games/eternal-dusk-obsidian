@@ -10,6 +10,7 @@ Situado en el fondo del cañón, anteriormente las entradas a las minas hoy en d
 - Capilla
 # **Misiones Principales**
 - [[Encuentra la fuente de la droga]]
+- [[Desapariciones en las minas]]
 # **Misiones Secundarias**
 - 
 # **Personajes Relevantes**
