@@ -1,126 +1,54 @@
 {
   "main": {
-    "id": "fdb1a8ed6d0967ed",
+    "id": "4f7bf5caeec6e4ca",
     "type": "split",
     "children": [
       {
-        "id": "e851a848fc5a1495",
+        "id": "b2f17e791101ea8a",
         "type": "tabs",
         "children": [
           {
-            "id": "9d0420df0e68ddc7",
+            "id": "7ecc681a573a02f4",
             "type": "leaf",
             "state": {
-              "type": "markdown",
+              "type": "split-diff-view",
               "state": {
-                "file": "01 - Diseño/Mecánicas/Estados.md",
-                "mode": "source",
-                "source": false
+                "aFile": "content/02 - Arquitectura/Action System.md",
+                "bFile": "content/02 - Arquitectura/Action System.md",
+                "aRef": ""
               },
-              "icon": "lucide-file",
-              "title": "Estados"
-            }
-          },
-          {
-            "id": "b681e611a6fe8497",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "01 - Diseño/Mecánicas/Áreas de Efectos.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Áreas de Efectos"
-            }
-          },
-          {
-            "id": "fe795d448f71d072",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "03 - Entidades/Agentes/Party/Veronica Viper.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Veronica Viper"
-            }
-          },
-          {
-            "id": "9d2ea3eb5f02491e",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "04 - Narrativa/Mundo/Áreas Principales/Calle Principal.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Calle Principal"
-            }
-          },
-          {
-            "id": "6eeb490a452aecfd",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "04 - Narrativa/Mundo/Áreas Principales/Barrio Minero.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Barrio Minero"
-            }
-          },
-          {
-            "id": "3fbadb47eb1278ac",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "05 - Misiones/Pricipales/Encuentra la fuente de la droga.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Encuentra la fuente de la droga"
-            }
-          },
-          {
-            "id": "ee333054aa0c2c5a",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "01 - Diseño/Mecánicas/Rangos y Áreas.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Rangos y Áreas"
+              "icon": "diff",
+              "title": "Diff: Action System  (Working Tree)"
             }
           }
-        ],
-        "currentTab": 6
+        ]
       }
     ],
     "direction": "vertical"
   },
   "left": {
-    "id": "7c05b3b008d14bb5",
+    "id": "80ffc9455afcd51d",
     "type": "split",
     "children": [
       {
-        "id": "a78a611af462c840",
+        "id": "21d268770699c4e2",
         "type": "tabs",
         "children": [
           {
-            "id": "959a5ce6e64cbfa8",
+            "id": "e642a08965252231",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Explorador de archivos"
+            }
+          },
+          {
+            "id": "e470505845ddd6af",
             "type": "leaf",
             "state": {
               "type": "search",
@@ -133,54 +61,39 @@
                 "sortOrder": "alphabetical"
               },
               "icon": "lucide-search",
-              "title": "Search"
+              "title": "Buscar"
             }
           },
           {
-            "id": "018b384b1be32b49",
-            "type": "leaf",
-            "state": {
-              "type": "file-explorer",
-              "state": {
-                "sortOrder": "alphabetical",
-                "autoReveal": true
-              },
-              "icon": "lucide-folder-closed",
-              "title": "Files"
-            }
-          },
-          {
-            "id": "d1980d7029d0f7ad",
+            "id": "f4847ac7fdd44215",
             "type": "leaf",
             "state": {
               "type": "bookmarks",
               "state": {},
               "icon": "lucide-bookmark",
-              "title": "Bookmarks"
+              "title": "Marcadores"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "horizontal",
     "width": 300
   },
   "right": {
-    "id": "6d482ea2bc510b66",
+    "id": "e1ce2dccb17aa9cb",
     "type": "split",
     "children": [
       {
-        "id": "853b18631e1714a7",
+        "id": "0c6e45fffd1a4dd4",
         "type": "tabs",
         "children": [
           {
-            "id": "e2c83850e90dc8c6",
+            "id": "46f768c547da0c52",
             "type": "leaf",
             "state": {
               "type": "backlink",
               "state": {
-                "file": "BaldursWest/Mecánicas/Estadísticas de Entidades.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -190,25 +103,25 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for Estadísticas de Entidades"
+              "title": "Enlaces entrantes"
             }
           },
           {
-            "id": "3a4699c8acbcc032",
+            "id": "b71a63bd1554ae30",
             "type": "leaf",
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "BaldursWest/Mecánicas/Estadísticas de Entidades.md",
+                "file": "01 - Gameplay/Mecánicas/Armas.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links from Estadísticas de Entidades"
+              "title": "Enlaces salientes de Armas"
             }
           },
           {
-            "id": "c351761ac248b91c",
+            "id": "a242c8729335aa2f",
             "type": "leaf",
             "state": {
               "type": "tag",
@@ -219,36 +132,25 @@
                 "searchQuery": ""
               },
               "icon": "lucide-tags",
-              "title": "Tags"
+              "title": "Etiquetas"
             }
           },
           {
-            "id": "54d72090900843ac",
+            "id": "18bc41c1acbeffc8",
             "type": "leaf",
             "state": {
-              "type": "outline",
+              "type": "all-properties",
               "state": {
-                "file": "Eternal Dusk/Templates/Gameplay/Personaje.md",
-                "followCursor": false,
+                "sortOrder": "frequency",
                 "showSearch": false,
                 "searchQuery": ""
               },
-              "icon": "lucide-list",
-              "title": "Outline of Personaje"
+              "icon": "lucide-ghost",
+              "title": "all-properties"
             }
           },
           {
-            "id": "d93df6ae0c8d94e2",
-            "type": "leaf",
-            "state": {
-              "type": "advanced-tables-toolbar",
-              "state": {},
-              "icon": "spreadsheet",
-              "title": "Advanced Tables"
-            }
-          },
-          {
-            "id": "c73d065a5f02cef4",
+            "id": "f1d229bd7b361136",
             "type": "leaf",
             "state": {
               "type": "git-view",
@@ -256,78 +158,83 @@
               "icon": "git-pull-request",
               "title": "Source Control"
             }
+          },
+          {
+            "id": "5cd13fb93236185e",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "01 - Gameplay/Sistemas/Cordura/Traumas y Virtudes.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Esquema de Traumas y Virtudes"
+            }
           }
         ],
-        "currentTab": 5
+        "currentTab": 4
       }
     ],
     "direction": "horizontal",
-    "width": 212.5
+    "width": 300
   },
   "left-ribbon": {
     "hiddenItems": {
-      "switcher:Open quick switcher": false,
-      "graph:Open graph view": false,
-      "canvas:Create new canvas": false,
-      "daily-notes:Open today's daily note": false,
-      "command-palette:Open command palette": false,
-      "bases:Create new base": false,
       "phrasesync:Reload PhraseSync": false,
       "obsidian-excalidraw-plugin:New drawing": false,
       "templater-obsidian:Templater": false,
       "table-editor-obsidian:Advanced Tables Toolbar": false,
-      "obsidian-git:Open Git source control": false,
-      "omnisearch:Omnisearch": false
+      "omnisearch:Omnisearch": false,
+      "switcher:Abrir selector rápido": false,
+      "graph:Abrir vista gráfica": false,
+      "canvas:Crear nuevo lienzo": false,
+      "daily-notes:Abrir la nota de hoy": false,
+      "command-palette:Abrir paleta de comandos": false,
+      "bases:Crear nueva base": false,
+      "obsidian-git:Open Git source control": false
     }
   },
-  "active": "ee333054aa0c2c5a",
+  "active": "7ecc681a573a02f4",
   "lastOpenFiles": [
-    "09 - Producción/Sugerencias/Básicas/Básica - asdasd.md",
-    "03 - Entidades/Agentes/Party/Fritz.md",
-    "04 - Narrativa/Personajes/Party/Fritz.md",
-    "04 - Narrativa/Mundo/Áreas Principales/Liberty City.md",
-    "04 - Narrativa/Mundo/Áreas Principales/Del' Toyah.md",
-    "04 - Narrativa/Mundo/Áreas Principales/Barrio Amurallado.md",
-    "04 - Narrativa/Mundo/Áreas Principales/Calle Principal.md",
-    "04 - Narrativa/Mundo/Áreas Principales/Barrio Minero.md",
+    "02 - Arquitectura/Action System.md",
+    "02 - Arquitectura/Area System.md",
     "05 - Misiones/Pricipales/Desapariciones en las minas.md",
-    "05 - Misiones/Pricipales/Encuentra la fuente de la droga.md",
-    "00 - Core/Core Loop.md",
+    "04 - Narrativa/Personajes/Party/Fritz.md",
+    "03 - Entidades/Agentes/Party/Fritz.md",
     "02 - Arquitectura/Quest System.md",
-    "03 - Entidades/Agentes/Party/Veronica Viper.md",
-    "01 - Diseño/Mecánicas/Áreas de Efectos.md",
-    "01 - Diseño/Mecánicas/Estados.md",
     "Plantillas/Misiones/Misión.md",
-    "05 - Misiones/Pricipales/PlaceHolder.md",
-    "04 - Narrativa/Estructura de la Trama.md",
     "Plantillas/Misiones",
-    "04 - Narrativa/Guión.md",
-    "04 - Narrativa/Mundo/Áreas Principales/Solitude (Obsoleto).md",
-    "04 - Narrativa/Mundo/Áreas Principales/Prisión.md",
-    "04 - Narrativa/Mundo/Áreas Principales/Megatón (Obsoleto).md",
+    "05 - Misiones/Pricipales/Encuentra la fuente de la droga.md",
+    "04 - Narrativa/Personajes/Party/Zarigüeya y Ooch (Obsoleto).md",
+    "04 - Narrativa/Personajes/Party/Veronica Viper.md",
+    "01 - Diseño/Sistemas/Tiradas/Suerte.md",
+    "01 - Diseño/Sistemas/Tiradas/Dados.md",
+    "01 - Diseño/Sistemas/Agentes/Habilidades de Agentes.md",
+    "01 - Diseño/Sistemas/Cordura/Cordura.md",
+    "01 - Diseño/Sistemas/Cordura/Traumas y Virtudes.md",
+    "01 - Diseño/Sistemas/Agentes/Posturas.md",
+    "01 - Diseño/Sistemas/Agentes/Estadísticas de Agentes.md",
+    "01 - Diseño/UI/Opciones de Interfaz.md",
+    "01 - Diseño/Sistemas/Turnos.md",
+    "01 - Diseño/Sistemas/Tiradas",
+    "01 - Diseño/Sistemas/Tiempo.md",
+    "01 - Diseño/Sistemas/Sigilo.md",
+    "01 - Diseño/Sistemas/Progresión.md",
+    "01 - Diseño/Sistemas/Inventario.md",
+    "01 - Diseño/Sistemas/Party.md",
     "01 - Diseño/Sistemas/Misiones.md",
-    "01 - Diseño/Mecánicas/Pactos (Wishlist).md",
-    "03 - Entidades/Agentes/Party/Lorenzo.md",
-    "03 - Entidades/Agentes/Party/Colt Egon.md",
+    "01 - Diseño/Sistemas/Investigación.md",
+    "01 - Diseño/Sistemas/Cordura",
+    "01 - Diseño/Sistemas/Agentes",
+    "01 - Diseño/UI",
+    "01 - Diseño/Sistemas",
+    "01 - Diseño/Mecánicas",
+    "01 - Diseño",
     "Templater/Scripts/recalculate-stats.js",
     "Templater/Scripts/recalculate-skills.js",
-    "Imágenes de Referencia/CoreLoop.png",
-    "Imágenes de Referencia",
-    "09 - Producción/Sugerencias/Facción",
-    "Templater/Scripts/fix-link-format.js",
-    "Templater/Scripts/Nuevo Documento de texto.txt",
-    "Templater/Scripts",
-    "Templater",
-    "Plantillas/Sugerencias",
-    "07 - Arte/Concept/Personajes/Lorenzo/Prota_Idle.png",
-    "Excalidraw/Scripts/Downloaded/Invert colors.svg",
-    "Excalidraw/Scripts/Downloaded/Lighten background color.svg",
-    "Excalidraw/Untitled.canvas",
-    "3719528a-f44a-46f1-9b5c-97445179b3ca.webp",
-    "5a0c681d-c6d6-4b9c-8037-f9b496ee0e55.webp",
-    "4a4be31a-d00f-4326-a9d1-32bf3fe4eef2.webp",
-    "4902a773-0103-4b6a-b45b-9c6831271d70.webp",
-    "84a99aed-b91f-4fb8-9284-fe843be2aeb4.webp",
-    "99eb55c0-3cb6-48ab-afa0-402a9070110b.webp"
+    "Imágenes de Referencia/CoreLoop.png"
   ]
 }
