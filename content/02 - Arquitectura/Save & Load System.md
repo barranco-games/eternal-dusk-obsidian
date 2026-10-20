@@ -1,11 +1,11 @@
 ## Overview
 
-The save system is built around explicit ownership and a clear separation between what the save system *knows about* and what it *contains*. Only a small number of root savables register into `SaveRegistry`. Everything else is owned and captured recursively by its root.
+The save system is built around explicit ownership and a clear separation between what the save system *knows about* and what it *contains*. Only a small number of root savables register into `SaveRegistry`. Everything else is owned and captured by the world or player root.
 
 The system operates in two phases:
 
 - **Pre-transition** — `SaveSessionState` is restored to determine which scene to load
-- **Post-transition** — the level pipeline runs `LoadGameStateStep`, which restores all remaining savables
+- **Post-transition** — the level pipeline runs `LoadGameStateStep`, which restores every registered savable from the save's envelopes. The steps after it then rebuild what those envelopes only describe: `WorldEntityLoadStep` re-links or re-creates world entities, and `PlayerSpawnStep` restores the party
 
 ---
 
@@ -13,24 +13,23 @@ The system operates in two phases:
 
 ### Ownership
 
-Every savable entity is owned by exactly one root. Roots are the only things that register into `SaveRegistry`. The registry stays lean — one entry per logical system.
+Every savable is a root: it owns its state and registers into `SaveRegistry`, either once at the composition root or per level. Entities are owned by `WorldState` or `PlayerState` and never register. The registry stays lean — one entry per logical system.
 
-| Entity type | Owner |
+| State | Owner |
 |---|---|
 | Scene name | `SaveSessionState` |
-| Props, chests, doors | `WorldState` |
-| Spawned enemies, projectiles | `PersistentSpawner` |
-| Summons | The summoning character's spawner |
-| Dropped items | `WorldState` (transferred at drop time) |
+| Props, chests, doors, items, and runtime-spawned entities such as enemies | `WorldState` |
+| Party members, not-yet-joined roster agents, quest and flag progression | `PlayerState` |
+| Surface patches and who stands in them | `SurfaceSavable` (registered per level by `AreaService`) |
+| Fog of war | `FogSavable` (registered by `AreaService` only for a level with fog of war enabled; the data lives in a per-slot side file) |
+| Articy global variables | `ArticyGlobalsSavable` |
+| Position of the dice stream | `DiceSavable` |
 
 ### Lifecycle dependency
 
-The distinction between `WorldState` ownership and spawner ownership is lifecycle:
+There is no per-creator spawner. Every world entity, whether placed in the scene or spawned at runtime, is tracked by `WorldState` per scene through `EntityRegistry.Track`, and untracked when it is destroyed or despawned. Party members are the exception: `PlayerState` captures them, since the party outlives any one scene.
 
-- **Lifecycle-bound** — dies with its creator → owned by a spawner
-- **World-persistent** — outlives its creator → owned by `WorldState`
-
-When a summon drops an item on death, it calls `WorldState.Track(item)`. Ownership transfers at that moment. The summon is gone, the item belongs to the world.
+`WorldState` also outlives the scene. When a level unloads, `UntrackScene` captures that scene's entities into stored envelopes, so the next save still holds a level the player has left. An entity that was removed is remembered by id in the scene's `Despawned` list, so a reload does not bring a scene-placed one back.
 
 ### Instance identity
 
@@ -41,93 +40,129 @@ Each persistent entity carries two identifiers:
 
 For scene-placed entities, `EntityId` is managed through `SerializableEntityId` in the Inspector — a Unity-serializable wrapper with a custom property drawer that auto-generates a GUID on first display and warns if a duplicate is detected in the scene. `PrefabId` is managed through `SerializablePrefabId`, which warns if the value is empty or not found in `PrefabRegistryDefinition`.
 
-For runtime-spawned entities, `EntityId.Generate()` is called at spawn time and saved into the envelope, ensuring stability within a session. `PrefabId` is assigned by the spawner at instantiation time.
+For runtime-spawned entities, `EntityFactory.CreateNew` calls `EntityId.Generate()` (unless the caller passes an id) and assigns it with `AssignEntityId`. The id is saved in the `WorldEntityEnvelope` next to the `PrefabId`, so it survives a reload. The `PrefabId` is the one authored on the prefab, which must match the id the prefab is registered under in `IPrefabRegistry`.
 
-`RestoreScene` matches on `EntityId`, not `PrefabId`, so multiple instances of the same prefab are unambiguous. `PrefabId` is only used by spawners when re-instantiating entities from a saved state — scene-placed entities are already in the scene and do not need prefab resolution.
+`RestoreScene` matches on `EntityId`, not `PrefabId`, so multiple instances of the same prefab are unambiguous. `PrefabId` is what `WorldEntityLoadStep` uses to re-instantiate runtime-spawned entities that have no live match (`GetUnmatchedEnvelopes` → `EntityFactory.CreateFromEnvelope`). It is not used to match scene-placed entities, which are already in the scene.
 
 ### Root registration
 
-`SaveSessionState` and `WorldState` are the only savables that register directly into `SaveRegistry`. This happens at composition root level via `OnContainerBuilt`, after the DI container is fully built:
+`SaveSessionState`, `PlayerState`, `WorldState`, `ArticyGlobalsSavable`, `FogSlotCleaner` and `DiceSavable` are the savables that register into `SaveRegistry` at the root. This happens in `RootInstaller` via `OnContainerBuilt`, after the DI container is fully built:
 
 ```csharp
 private void OnContainerBuilt(Container container)
 {
     var registry = container.Resolve<ISaveRegistry>();
     registry.Register(container.Resolve<SaveSessionState>());
+    registry.Register((ISavable)container.Resolve<IPlayerState>());
     registry.Register((ISavable)container.Resolve<IWorldState>());
+    registry.Register(new ArticyGlobalsSavable(() => ArticyDatabase.DefaultGlobalVariables));
+    registry.Register(new FogSlotCleaner(new FogPersistenceStore()));
+    registry.Register(new DiceSavable(container.Resolve<CapturableRandom>()));
 }
 ```
 
-`WorldState` is resolved through `IWorldState` and cast to `ISavable` for registration. All other savables (`PersistentSpawner` adapters) register through `SceneSaveRegistryBridge` at scene load time via `Awake`. All `PersistentEntity` instances track themselves into `IWorldState` through the same bridge.
+`WorldState` and `PlayerState` are resolved through their interfaces and cast to `ISavable` for registration. `FogSlotCleaner` saves nothing: it only purges a deleted slot's fog, because `FogSavable` is registered only while a fogged level is loaded. Per-level savables are registered by `AreaService` when the level's areas start: `SurfaceSavable` for every level, `FogSavable` only when the level has fog of war enabled (`Prison_Cells_Start` and `DemoArena` have it off). Both are unregistered when the level tears down; `SaveRegistry.Unregister` removes a savable only if it still holds its id, so a scene unloading after the next one registered keeps the newer one. World entities do not register at all: `EntityFactory` hands them to `EntityRegistry.Track`, which tracks them into `IWorldState` under the registry's own scene name (`gameObject.scene.name`).
 
-### The bridge pattern
+### Savables and persistable entities
 
-MonoBehaviours cannot inherit from pure C# base classes without crossing layer boundaries. The bridge pattern solves this: the MonoBehaviour holds an instance of the pure C# savable and delegates to it. The MonoBehaviour wires Unity lifecycle (`Awake`, `OnDestroy`) to registration, and provides data via an interface.
+There are two kinds of persistent thing, and the split keeps MonoBehaviours out of the registry:
 
-```
-MonoBehaviour (Engine.World)
-  └── holds → Savable (Engine)
-                └── registered in → SaveRegistry
-```
+- **Savables** — pure C# classes implementing `ISavable` (usually via `Savable<TState>`), registered into `SaveRegistry`. Each captures one `SaveEnvelope` of its own state.
+- **Persistable entities** — `Entity<TState>` MonoBehaviours implementing `IPersistableEntity` (`TypeName`, `Version`, `Capture`, `Restore`, `RestoreAsNew`). They never register into `SaveRegistry`; `EntityFactory` adopts or creates them, `EntityRegistry` tracks them, and `WorldState` captures them as `WorldEntityEnvelope`s (entity id, prefab id, envelope).
 
-`Spawner` uses an inner `SpawnerAdapter` class as the bridge, so `SpawnerSavable` in Engine never touches Unity directly.
+---
+
+## Save Slots
+
+A save is one `SaveFile` per slot: `Metadata` plus the list of `SaveEnvelope`s the registry captured. The file is a JSON file (Newtonsoft, indented) at `<persistent data>/Saves/<SlotId>.json`. In the editor the root is a subfolder named after the project checkout, so parallel editors keep separate saves. Fog is a side file at `AreaTiles/<SlotId>/<areaTypeId>.fog`.
+
+- **Identity** — `SaveFileMetadata.SlotId` is minted once in `GameStateService.NewGame` as `{sanitized name}_{yyyyMMdd_HHmmss}` (`SlotNaming.BuildSlotId`; `GameStateService.UniqueSlotId` appends `_2`, `_3`, … on a collision). It names the save file and the fog folder and never changes. `SaveName` is only a display label (32 characters at most); renaming rewrites the file's metadata and moves nothing. `SaveFile` carries no separate slot id.
+- **Metadata** — `SchemaVersion`, `GameVersion`, `SlotId`, `SaveName`, `PlayTimeSeconds`, `CreatedAt`, `SavedAt`. Slot listings read only this header (`SaveFileHeader`) and sort by `SavedAt`, newest first. A file whose `SlotId` does not match its filename is left out of the list.
+- **Refusing a newer save** — load and rename refuse a save with a higher `SchemaVersion`, or one written by a newer game version.
+- **Write** — the save is written to `<SlotId>.tmp` and then promoted over `<SlotId>.json` with `File.Replace`. The file it replaces becomes `<SlotId>.bak`. A rename keeps the existing `.bak`. There are no snapshots: each save overwrites the slot it loaded.
+- **Slot-scoped side data** — a savable that keeps data outside the envelope (fog) stages it during `CaptureAsync`, promotes it in `ISavable.CommitSlot(slotId)` after the file is written, and purges it in `ISavable.DeleteSlot(slotId)`.
+- **Slot screen** — the main menu's Continue entry (shown only while a slot exists) opens a screen to list, load, rename and delete slots, driven by `SaveSlotsPresenter` through `IGameStateService.ListSlotsAsync`, `LoadAsync`, `RenameSlotAsync` and `DeleteSlotAsync`.
+
+What a slot holds, by envelope: scene name (`session_state`), party, roster and progression (`player_state`), world entities per scene (`world_state`), surfaces (`surfaces`), fog (`FogOfWar`, only for levels with fog enabled; the envelope is a marker and the data is the side file), Articy globals (`ArticyGlobals`) and the dice stream (`Dice`). Dice are saved so that reloading cannot re-roll a check or a hit.
 
 ---
 
 ## Save Flow
 
 ```
-GameStateService.SaveAsync(fileName)
+GameStateService.SaveAsync(ct)            ← saves Current, to its own slot
   │
-  ├── SaveRegistry.GetAll()
-  │     returns all registered ISavables:
-  │       SaveSessionState, WorldState, Spawner A, Spawner B ...
+  ├── stamp SavedAt, GameVersion and PlayTimeSeconds
   │
-  ├── foreach savable → savable.Capture(envelopeSerializer)
-  │     SaveSessionState  → captures current scene name
-  │     WorldState        → captures all scenes, each with their tracked IWorldPersistentEntity instances
-  │     PersistentSpawner → captures all active ISpawnableEntity instances
+  ├── SaveRegistry.GetAll()               ← a snapshot, since savables register as levels load
+  │     SaveSessionState, PlayerState, WorldState, ArticyGlobals, Dice,
+  │     and while a level is loaded: Surfaces, plus FogOfWar if the level has fog
   │
-  └── SaveService.SaveAsync(fileName, saveFile)
+  ├── foreach savable → savable.CaptureAsync(envelopeSerializer, ct)
+  │     SaveSessionState → captures current scene name
+  │     PlayerState      → party, roster agents (joined or not), progression
+  │     WorldState       → every scene, each with its tracked IPersistableEntity envelopes and despawned ids
+  │     FogSavable       → stages the fog side file, returns a marker envelope
+  │     envelopes of earlier saves whose savable is not registered now (fog from another level)
+  │       are carried over unchanged
+  │
+  ├── SaveService.SaveAsync(slotId, saveFile)    ← .tmp, then File.Replace, previous file kept as .bak
+  │
+  └── foreach savable → savable.CommitSlot(slotId)    ← only after the file is written
 ```
+
+Saves are serialized: a save, a rename or a delete waits for the one in flight (`WhenSaveSettles`).
+
+Triggers:
+
+- **Autosave on unload** — `SaveGameStateStep.Shutdown` calls `SaveAsync` when its level unloads, unless the run is lost (`IsDefeat`), in combat, or in an encounter, where Continue resumes from the last save. Only levels that list `SaveGameStateStep` autosave (`ILevelLoader.Autosaves`): `Prison_Cells_Start`, `ScenarioBoot` and `SkillLab` do; `DemoArena` does not.
+- **Save on quit** — `SaveOnQuit` holds a player's quit back while a level that autosaves is loaded, runs that level's unload (and so its autosave, with a 30 s timeout) and then quits. It is inactive in the editor and in batch mode.
+- **Not on a new game or a load** — both set an abandon flag, so the level they unload does not write itself into the fresh or just-loaded slot.
 
 ---
 
 ## Load Flow
 
 ```
-GameStateService.LoadAsync(fileName)
+GameStateService.LoadAsync(slotId)
   │
+  ├── SaveService.LoadHeader   ← refuse a newer schema or game version
   ├── SaveService.LoadAsync → SaveFile
-  ├── SaveRegistry.Get(SaveSessionState.StateId)
-  ├── SaveSessionState.Restore(envelope)   ← now knows SceneToRestoreOn
+  ├── Current = save   (rolled back if the load fails)
+  ├── the registered ISceneRestorable (SaveSessionState) restores its envelope   ← now knows SceneToRestoreOn
   │
-  └── SceneService.RequestTransition(SceneToRestoreOn)
+  ├── scene already open with no level loaded (a boot save)
+  │     └── LevelLoader.LoadLevelAsync in place, no transition
+  │
+  └── otherwise SceneService.RequestTransition(SceneToRestoreOn)
         │
         ├── LevelLoader.UnloadCurrentLevelAsync
-        │     └── LevelLifecyclePipeline.Shutdown
+        │     ├── LevelLifecyclePipeline.Shutdown   (no autosave: the load set the abandon flag)
+        │     └── WorldState.UntrackScene(scene)
         │
         ├── SceneLoader.LoadScene
-        │     └── Unity loads scene
-        │           └── MonoBehaviours Awake()
-        │                 PersistentEntity  → Bridge.Track(gameObject.scene.name, this)
-        │                                    → WorldState.Track(sceneId, this)
-        │                 PersistentSpawner → Bridge.Register(adapter)
-        │                                    → SaveRegistry.Register(adapter)
         │
         └── LevelLoader.LoadLevelAsync
               └── LevelLifecyclePipeline.Initialize
-                    └── LoadGameStateStep.Initialize
-                          ├── SaveRegistry.RestoreAll(save.Envelopes)
-                          │     WorldState        → caches WorldStateData (_lastRestoredData)
-                          │     PersistentSpawner → despawns all, respawns from state
-                          │
-                          └── WorldState.RestoreScene(currentScene)
-                                → matches tracked entities by EntityId
-                                → calls entity.Restore(envelope, serializer)
+                    ├── LoadGameStateStep
+                    │     new game → Reset() every savable
+                    │     otherwise SaveRegistry.RestoreAllAsync(Current.Envelopes)
+                    │       WorldState → stores each scene's entity envelopes and despawned ids
+                    │       PlayerState → keeps LastRestoredData
+                    │       Surfaces, Fog, Dice, Articy → restore themselves
+                    │
+                    ├── WorldEntityLoadStep
+                    │     → adopts scene entities, despawning those the save saw removed
+                    │     → WorldState.RestoreScene(sceneId): matches tracked entities by EntityId
+                    │       and calls entity.Restore(envelope, restoreContext)
+                    │     → recreates unmatched (runtime-spawned) entities from their PrefabId
+                    │       (EntityFactory.CreateFromEnvelope)
+                    │
+                    └── PlayerSpawnStep
+                          → restores party members from PlayerState.LastRestoredData
 ```
 
-The ordering is safe by design: `Awake` registration happens during `SceneLoader.LoadScene` before the pipeline runs. `PersistentEntity` uses `gameObject.scene.name` rather than `SceneService.CurrentScene` to avoid a timing issue — `SceneService` is only updated after the load completes, but `gameObject.scene.name` is correct as soon as the object exists in the scene.
+Savables are registered before the pipeline runs, and `WorldEntityLoadStep` runs after `LoadGameStateStep`, so the world's stored envelopes are in place before any entity is matched. `EntityRegistry` keys entities by its own scene name (`gameObject.scene.name`), and `WorldEntityLoadStep` throws if the level definition's `SceneName` differs from the loaded scene, since entities would otherwise be looked up under a key nothing wrote. A savable only some levels register (fog) is absent from a save made elsewhere; the save carries its last envelope over unchanged.
 
 ---
 
@@ -135,78 +170,58 @@ The ordering is safe by design: `Awake` registration happens during `SceneLoader
 
 ### World-persistent scene object
 
-1. Define a state record in Core/Persistence/Data/Entities, e.g. `DoorData`
-2. Create a class extending `PersistentEntity<DoorData>` in Engine/World/Entities
-3. Implement `TypeName`, `Version`, `CaptureTyped`, and `RestoreTyped`
+1. Define a state record in Gameplay/Data, e.g. `DoorData` (see `EntityData`, `WeaponData`)
+2. Create a class extending `Entity<DoorData>` in Engine/World/Entities
+3. Implement `TypeName`, `Version`, `CaptureTyped`, `RestoreAsNew` and `RestoreTyped`
 4. Attach it to the GameObject in the scene
-5. Set a unique `EntityId` and the correct `PrefabId` in the Inspector, wire the `SceneSaveRegistryBridge` reference
+5. Set a unique `EntityId` and the correct `PrefabId` in the Inspector
+
+No registration code is needed: `WorldEntityLoadStep` finds every `IPersistableEntity` in the scene and `EntityFactory.Adopt` tracks it.
 
 ```csharp
-public sealed class DoorEntity : PersistentEntity<DoorData>
+public sealed class DoorEntity : Entity<DoorData>
 {
     public override string TypeName => "door";
     public override int Version => 1;
 
     protected override DoorData CaptureTyped() => new()
     {
-        Position = transform.position.ToData(),
+        EntityId = EntityId.ToString(),
+        TransformData = transform.ToData(),
         IsOpen = _isOpen
     };
 
-    protected override void RestoreTyped(DoorData state)
+    public override void RestoreAsNew() { }
+
+    protected override void RestoreTyped(DoorData state, RestoreContext context)
     {
-        transform.position = state.Position.ToUnity();
+        transform.SetData(state.TransformData);
         _isOpen = state.IsOpen;
     }
 }
 ```
 
-Each entity type owns its own state shape — there is no shared base data record.
+State records derive from `EntityData`, as `ActorData` and `WeaponData` do.
 
-### Spawner
+### Runtime-spawned entity
 
-1. Define a state record in Core/Persistence/Data/Entities, e.g. `EnemyData`
-2. Create a MonoBehaviour that implements `ISpawnableEntity` for the spawned entity
-3. Extend `PersistentSpawner` and implement:
-   - `Spawn` — instantiate from `SpawnedEntityState`, return the `ISpawnableEntity`
-   - `Despawn` — destroy or return to pool
+An entity created while the game runs needs no spawner of its own. It is an `Entity<TState>` prefab, built exactly as above, with:
 
-```csharp
-public sealed class EnemySpawner : PersistentSpawner
-{
-    [SerializeField] private GameObject _enemyPrefab;
-    [Inject] private IEnvelopeSerializer _serializer;
+1. its `PrefabId` registered in `PrefabRegistryDefinition` (the `SerializablePrefabId` drawer warns when it is not)
+2. creation through `IEntityFactory.CreateNew(prefabId, position, ct)`, which loads the prefab, generates an `EntityId`, initializes it and tracks it in `EntityRegistry` and so in `WorldState`
 
-    protected override IEnvelopeSerializer Serializer => _serializer;
+On load, `WorldEntityLoadStep` finds the saved envelopes that match no live entity and recreates each one with `EntityFactory.CreateFromEnvelope`, using the saved `EntityId` and `PrefabId`.
 
-    protected override ISpawnableEntity Spawn(SpawnedEntityState state)
-    {
-        var go = Instantiate(_enemyPrefab);
-        var enemy = go.GetComponent<Enemy>();
-        enemy.Restore(state.Envelope, Serializer);
-        ActiveInstances.Add(enemy);
-        return enemy;
-    }
+### Root savable (state that is not an entity)
 
-    protected override void Despawn(ISpawnableEntity instance)
-    {
-        Destroy(((Enemy)instance).gameObject);
-    }
-}
-```
+State that belongs to no entity — a stream, a set of variables — is a `Savable<TState>`:
 
-### Summoner
+1. Define a serializable state class
+2. Extend `Savable<TState>` and implement `Id`, `Version`, `CaptureTyped` (it must build a fresh object: the payload is serialized off the main thread) and `RestoreTyped`; override `Reset` to clear it on a new game
+3. Register it in `RootInstaller.OnContainerBuilt`, or from a per-level service that unregisters it on teardown (`AreaService` does this)
+4. If it keeps data outside the envelope scoped to a slot, override `CommitSlot` and `DeleteSlot`
 
-Same as a spawner. The summoning character extends `PersistentSpawner`. Summons are lifecycle-bound — they are captured inside the character's envelope, not registered separately.
-
-When a summon drops an item on death:
-
-```csharp
-// Inside summon death logic
-_worldState.Track(gameObject.scene.name, droppedItem);
-```
-
-Ownership transfers to `WorldState` at that point.
+`DiceSavable` is the smallest example.
 
 ---
 
@@ -226,4 +241,4 @@ protected override MyData Migrate(int fromVersion, MyData state)
 }
 ```
 
-`Restore` calls `Migrate` automatically when `envelope.Version != Version`. If no migration is defined, the base implementation logs a warning and passes the data through as-is.
+`Restore` calls `Migrate` automatically when `envelope.Version < Version`. An envelope newer than the build (`envelope.Version > Version`) cannot be migrated downward, so `ThrowIfNewerThan` refuses it instead of restoring misread data. If no migration is defined, the base implementation logs a warning and passes the data through as-is. `Entity<TState>` has the same `Migrate` hook for persistable entities, and `SaveFileMetadata.SchemaVersion` guards the file as a whole.
