@@ -327,14 +327,18 @@ La especificación técnica detallada de cada sistema se mantiene en el capítul
     
 - [[Save & Load System]]: captura y restauración versionada por entidad, con soporte de migración para formatos de guardado anteriores.
     
+- [[Turn System]]: turnos de exploración por reloj y de combate por iniciativa, con turnos de grupo fusionados y una fase del mundo que cierra cada ronda.
+    
+- [[Combat & Dice]]: tiradas de atributo d100 con niveles de éxito, ventaja y desventaja, probabilidad de acierto y la cadena de daño, sobre un flujo de dados con semilla que se guarda.
+    
+- [[Status Effects System]]: estados con una ranura por tipo, compuestos de comportamientos definidos en datos, que se descuentan al inicio del turno de su portador.
+    
 - [[Quest System]]: seguimiento y progresión de misiones principales y secundarias.
     
 - [[Technical Sound Document]]: especificación técnica y artística del audio con FMOD.
     
 - Sin página todavía, aunque ya existen en el código:
-    - Turnos: TurnService, TurnOrder y los gobernadores de exploración y combate (Systems/Turns).
     - IA enemiga: planificación del turno en Systems/AI (véase la sección 3.4).
-    - Efectos de estado: StatusEffect y sus comportamientos (Gameplay/StatusEffects), aplicados por ActorStatusEffects y StatusEffectService (Systems/StatusEffects).
     - Equipamiento: AgentEquipment (Systems/Equipment).
     - UI: presentadores MVP sobre UI Toolkit (Systems/UI, Engine/UI).
     
