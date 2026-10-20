@@ -345,14 +345,17 @@ La especificación técnica detallada de cada sistema se mantiene en el capítul
     
 - [[Level & Scene Loading]]: arranque, transiciones de escena, definiciones de nivel y los pasos de ciclo de vida que levantan y cierran cada nivel.
     
+- [[Commands & Debugging]]: comandos de texto que ejecutan las acotaciones de Articy y los barks, y las herramientas de depuración (la consola, las teclas F9 y F10, el arnés de escenarios y los drivers de builds).
+    
+- [[Dialogue System]]: la integración de Articy, de la entidad enlazada a la línea en pantalla, con hablantes y retratos, revelado de texto, barks, métodos de script, variables globales y su guardado, y localización.
+    
+- [[Camera & Input]]: el rig de Cinemachine 3 (cámara libre, de foco, planos de diálogo y de depuración), el rayo del puntero, las acciones del Input System y los bloqueos de entrada.
+    
 - [[Quest System]]: seguimiento y progresión de misiones principales y secundarias.
     
 - [[Technical Sound Document]]: especificación técnica y artística del audio con FMOD.
     
-- Sin página todavía, aunque ya existen en el código:
-    - Comandos y depuración: la consola de comandos (Core/Commands, Systems/Commands) y las herramientas de Systems/Debugging.
-    - Diálogo: la integración de Articy (Engine/Narrative); el DialogueService ya se describe en [[Action System]].
-    - Cámara y entrada: Core/Camera, Systems/Camera, Core/Input, Engine/Unity/Camera y Engine/Unity/Input.
+- Con código pero sin página propia, por ser pequeños: los ajustes de usuario (Core/Settings, Systems/Settings), los servicios de plataforma (reloj de juego, bucle de actualización, pantalla y tasa de fotogramas; Core/Platform, Engine/Unity/Platform) y la pausa (IPauseService, Core/GameState), la analítica y el informe de errores (Engine/Analytics), el perfilado (Core/Profiling, Engine/Profiling) y los VFX de habilidades (Engine/Unity/Vfx).
     
 
 TODO: Un diagrama de arquitectura debe acompañar esta sección.
