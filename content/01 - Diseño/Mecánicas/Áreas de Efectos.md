@@ -1,5 +1,5 @@
 - **Fuego:** Aplica [[Estados#^sts-burning|Quemado]] 2 [[Turnos|turnos]] a quien entre en el área, salvo tirada de [[Estadísticas de Agentes#Constitución|Constitución]]. ^aoe-fire
-- **Humo:** Quien esté en el área queda Cegado, pero también [[Estados#^sts-hidden|Oculto]]. ^aoe-smoke
+- **Humo:** Quien esté en el área se le aplicará [[Estados#^sts-blinded|Ceguera]], pero también [[Estados#^sts-hidden|Oculto]]. ^aoe-smoke
 - **Abrojos:** [[Dados#Tiradas de Estadísticas|Tirada]] de [[Estadísticas de Agentes#Constitución|Constitución]] por metro avanzado o un stack de [[Estados#^sts-bleeding|Sangrado]] durante 2 [[Turnos|turnos]]. ^aoe-caltrops
 - **Reactivo:** Los enemigos que entren en el área deberá pasar una [[Dados#Tiradas de Estadísticas|Tirada]] de [[Estadísticas de Agentes#Constitución|Constitución]] o serán [[Estados#^sts-slowed|Ralentizados]]. ^aoe-reactive
 

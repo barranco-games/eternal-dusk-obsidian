@@ -14,10 +14,13 @@ const ARCHIVOS = {
     objetos: "1BdzhBaCZeJew4DqfjwT8PVIeVsz4Wjiz5tENGyErrkE",
     reglas: "1RWorzvol5UtFhx3RcZlzCZTR7ToR2O9W8TVERlrAozg",
 };
-
 // Pestaña de ED · Agentes -> carpeta de sus fichas.
 const CARPETA_AGENTES = "03 - Entidades/Agentes";
 const CARPETAS = { Party: "Party", Enemigos: "Enemigos", NPCs: "NPC" };
+
+// Cada arma tiene su ficha en <CARPETA_ARMAS>/<Categoría>/<Nombre>.md (se crea si no existe) y
+// la nota "armas" es el índice, con las armas por categoría y las acciones comunes.
+const CARPETA_ARMAS = "03 - Entidades/Armas";
 
 // Notas generales que se generan a partir de las hojas.
 const NOTAS = {
@@ -27,6 +30,7 @@ const NOTAS = {
     areas: "01 - Diseño/Mecánicas/Áreas de Efectos.md",
     traumas: "01 - Diseño/Sistemas/Cordura/Traumas y Virtudes.md",
     posturas: "01 - Diseño/Sistemas/Agentes/Posturas.md",
+    habilidadesAgentes: "01 - Diseño/Sistemas/Agentes/Habilidades de Agentes.md",
 };
 
 // Pestañas que se leen de cada archivo para resolver IDs.
@@ -35,7 +39,7 @@ const PESTANAS = {
     habilidades: ["Party", "Enemigos", "Comunes", "Armas", "Objetos", "Reacciones", "Pasivas", "Mejoras"],
     objetos: ["Armas", "Armaduras", "Trinkets", "Consumibles", "Municion", "Recursos"],
     reglas: ["Estadísticas", "Estados", "Tipos de daño", "Áreas de efecto", "Dados de Daño", "Posturas", "Traumas y Virtudes",
-        "Modificadores", "Palabras clave"],
+        "Modificadores", "Palabras clave", "Tipos de armas"],
 };
 
 const STATS = ["CON", "FUE", "DES", "POD", "COG", "SUE"];
@@ -219,18 +223,50 @@ const rangoArma = (w) => textoRango({ ...w, "Clase de rango": w["Clase de rango"
 const danioArma = danio;
 const MANOS = { 1: "Una Mano", 2: "Dos Manos", Una: "Una Mano", Dos: "Dos Manos" };
 
-function tablaArmas(armas, nombreDe) {
+// Sin `conNombre` (la ficha de cada arma) se quita la columna Arma.
+function tablaArmas(armas, nombreDe, conNombre = true) {
+    const cols = (cs) => (conNombre ? cs : cs.slice(1));
     return [
-        fila(["**Arma**", "**Daño**", "**[[Rangos y Áreas#Rangos\\|Rango]]**", "**Objetivo**", "**Munición**",
-            "**[[Armas#^armas-tipo\\|Tipo]]**", "**[[Armas#^tirada-fallo\\|Tirada de Fallo]]**", "**[[Armas#^manos\\|Manejo]]**"]),
-        fila(["---", ":---:", ":---:", ":---:", ":---:", ":---:", ":---:", ":---:"]),
-        ...armas.map((w) => fila([
+        fila(cols(["**Arma**", "**Daño**", "**[[Rangos y Áreas#Rangos\\|Rango]]**", "**Objetivo**", "**Munición**",
+            "**[[Armas#^armas-tipo\\|Tipo]]**", "**[[Armas#^tirada-fallo\\|Tirada de Fallo]]**", "**[[Armas#^manos\\|Manejo]]**"])),
+        fila(cols(["---", ":---:", ":---:", ":---:", ":---:", ":---:", ":---:", ":---:"])),
+        ...armas.map((w) => fila(cols([
             `**${celda(w.Nombre)}**`, danioArma(w, nombreDe), rangoArma(w) || "-", textoArea(w) || "-",
             celda([w.Cargador, w["Munición"] && `(${nombreDe(w["Munición"])})`].filter(Boolean).join(" ") || "-"),
             celda(w.Tipo || "-"), w["Tirada de fallo"] ? `${celda(w["Tirada de fallo"])}/000` : "-",
             MANOS[w.Manos] ?? celda(w.Manos || "-"),
-        ])),
+        ]))),
     ];
+}
+
+// La Categoría puede ser un ID de ED · Reglas › Tipos de armas (wct_revolver -> su Nombre, "Revólveres")
+// o directamente el nombre.
+let porId = () => null;
+const categoriaArma = (w) => porId(w["Categoría"])?.Nombre || w["Categoría"] || "Otras";
+const rutaArma = (w) => `${CARPETA_ARMAS}/${categoriaArma(w)}/${String(w.Nombre).replace(/[\\/:*?"<>|#^[\]]/g, "")}.md`;
+const enlaceArma = (w) => `[[${rutaArma(w).replace(/\.md$/, "")}|${w.Nombre}]]`;
+
+// Ficha de un arma: tabla de estadísticas y sus habilidades, con las que heredan del arma ya resueltas.
+// Las acciones comunes (`esComun`) no se repiten en la ficha: están en el índice.
+function fichaArma(lineas, w, buscar, nombreDe, esComun = () => false) {
+    lineas = reemplazarSeccion(lineas, "Estadísticas", tablaArmas([w], nombreDe, false));
+    const habilidades = lista(w.Habilidades).filter((id) => !esComun(id)).map(buscar).filter(Boolean);
+    if (habilidades.length) lineas = reemplazarSeccion(lineas, "Habilidades", tablaHabilidades(habilidades, nombreDe, null, () => w));
+    return lineas;
+}
+
+// Índice de armas: una sección por categoría con el enlace a cada ficha, y las acciones comunes.
+function indiceArmas(lineas, armas, comunes, tipos, nombreDe) {
+    lineas = quitarSeccion(quitarSeccion(lineas, "Tabla de Armas"), "Habilidades de Armas");
+    if (lineas.every((l) => l.trim() === "")) lineas = [];
+    // Las categorías salen en el orden de la pestaña Tipos de armas; las que no estén, detrás.
+    const orden = (c) => { const i = tipos.findIndex((t) => t.Nombre === c); return i === -1 ? Infinity : i; };
+    for (const c of [...new Set(armas.map(categoriaArma))].sort((a, b) => orden(a) - orden(b))) {
+        lineas = reemplazarSeccion(lineas, c, armas.filter((w) => categoriaArma(w) === c).map((w) => `- ${enlaceArma(w)}`),
+            { modo: "lista", antesDe: "Acciones comunes" });
+    }
+    if (comunes.length) lineas = reemplazarSeccion(lineas, "Acciones comunes", tablaHabilidades(comunes, nombreDe));
+    return lineas;
 }
 
 // Cada consumible toma coste, daño, rango y área de su habilidad de uso.
@@ -256,7 +292,7 @@ function listaEquipo(a, buscar, nombreDe) {
         const w = buscar(id);
         if (!w) return id;
         const datos = [danioArma(w, nombreDe), rangoArma(w)].filter(Boolean).join(", ");
-        return datos ? `${w.Nombre} (${datos})` : w.Nombre;
+        return datos ? `${enlaceArma(w)} (${datos})` : enlaceArma(w);
     };
     const nombre = (id) => buscar(id)?.Nombre ?? id;
     return [
@@ -349,6 +385,24 @@ function tablaTraumas(filas, cabecera, modificadores, nombreDe) {
     ];
 }
 
+// Habilidades de Agentes: las generales (Habilidades › Comunes, sin las que lleva algún arma, que ya
+// están en el índice de armas) y las reacciones. El resto de la nota se escribe a mano.
+function tablaGenerales(habilidades) {
+    return [
+        fila(["**Nombre**", "**Coste**", "**Descripción**"]),
+        fila(["---", ":---:", "---"]),
+        ...habilidades.map((h) => fila([`**${celda(h.Nombre)}**`, coste(h) || "-", celda(enlazar(h["Descripción"], h.Nombre))])),
+    ];
+}
+function tablaReacciones(reacciones) {
+    return [
+        fila(["**Nombre**", "**Coste**", "**Condición**", "**Descripción**"]),
+        fila(["---", ":---:", "---", "---"]),
+        ...reacciones.map((h) => fila([`**${celda(h.Nombre)}**`, coste(h) || "-", celda(enlazar(h["Condición"])),
+            celda(enlazar(h["Descripción"], h.Nombre))])),
+    ];
+}
+
 // ---------- Edición de la nota ----------
 
 const esBloque = (l) => l.startsWith("|") || l.startsWith("```");
@@ -381,6 +435,15 @@ function reemplazarSeccion(lineas, titulo, nuevas, { modo = "tablas", antesDe } 
     return [...lineas.slice(0, ini + 1), ...nuevoCuerpo, ...lineas.slice(fin)];
 }
 
+// Quita la sección "# <titulo>" entera, si existe.
+function quitarSeccion(lineas, titulo) {
+    const ini = lineas.findIndex((l) => l.trim() === `# ${titulo}`);
+    if (ini === -1) return lineas;
+    let fin = lineas.findIndex((l, i) => i > ini && /^# /.test(l));
+    if (fin === -1) fin = lineas.length;
+    return [...lineas.slice(0, ini), ...lineas.slice(fin)];
+}
+
 // Sustituye la primera tabla (o lista, con esItem) de la nota, para notas que no tienen secciones.
 function reemplazarPrimeraTabla(lineas, nuevas, esParte = (l) => l.startsWith("|")) {
     const a = lineas.findIndex(esParte);
@@ -392,7 +455,7 @@ function reemplazarPrimeraTabla(lineas, nuevas, esParte = (l) => l.startsWith("|
 
 // ---------- Núcleo común ----------
 
-async function sincronizar({ datos, leer, escribir, listar, log }) {
+async function sincronizar({ datos, leer, escribir, crear, listar, log }) {
     // Índice de todo lo que se puede referenciar por ID.
     const indice = new Map();
     for (const archivo of ["habilidades", "objetos", "reglas"]) {
@@ -404,6 +467,7 @@ async function sincronizar({ datos, leer, escribir, listar, log }) {
     const buscar = (id) => { const r = indice.get(id); if (!r) faltan.add(id); return r; };
     const nombreDe = (id) => buscar(id)?.Nombre ?? id;
     buscarDados = buscar;
+    porId = (id) => (id ? indice.get(id) : null);
 
     // Estados y áreas, con sus anclas, para generar sus notas y enlazar las descripciones.
     const reglas = (p) => parseCSV(datos.reglas?.[p] ?? "").filter(activa);
@@ -455,17 +519,38 @@ async function sincronizar({ datos, leer, escribir, listar, log }) {
     }
     // Notas generales: solo se reescriben si su pestaña tiene filas.
     const filas = (archivo, pestana) => parseCSV(datos[archivo]?.[pestana] ?? "").filter(activa);
+
+    // Fichas de armas: se actualizan y, si no existen, se crean.
+    const armas = filas("objetos", "Armas");
+    // Acciones comunes de armas: las habilidades que llevan armas de dos o más categorías (Recargar,
+    // Desencasquillar...) y las de Habilidades › Armas que no tiene ningún arma. Van en el índice,
+    // no en cada ficha. Los ataques propios de un tipo de arma (los de todos los revólveres) no cuentan.
+    const categoriasDe = new Map();
+    for (const w of armas) for (const id of lista(w.Habilidades)) {
+        (categoriasDe.get(id) ?? categoriasDe.set(id, new Set()).get(id)).add(categoriaArma(w));
+    }
+    const esComun = (id) => (categoriasDe.get(id)?.size ?? 0) >= 2;
+    const accionesComunes = [
+        ...[...categoriasDe.keys()].filter(esComun).map(buscar).filter(Boolean),
+        ...filas("habilidades", "Armas").filter((h) => !categoriasDe.has(h.ID)),
+    ];
+    const creadas = [];
+    for (const w of armas) {
+        const ruta = rutaArma(w);
+        const actual = await leer(ruta);
+        if (actual == null && !crear) { resumen.noEncontradas.push(ruta); continue; }
+        const inicio = actual == null ? (w["Descripción"] ? [w["Descripción"], ""] : []) : actual.split("\n");
+        const nuevo = fichaArma(inicio, w, buscar, nombreDe, esComun).join("\n");
+        if (actual == null) { await crear(ruta, nuevo); creadas.push(w.Nombre); continue; }
+        if (nuevo === actual) continue;
+        await escribir(ruta, nuevo);
+        resumen.actualizadas.push(w.Nombre);
+    }
+    const sinCategoria = armas.filter((w) => !w["Categoría"]).map((w) => w.Nombre);
     const generales = {
         armas: (lineas) => {
-            const armas = filas("objetos", "Armas");
-            const habilidades = filas("habilidades", "Armas");
-            if (armas.length) lineas = reemplazarSeccion(lineas, "Tabla de Armas", tablaArmas(armas, nombreDe));
-            if (habilidades.length) {
-                const armaDe = (h) => armas.filter((w) => lista(w.Habilidades).includes(h.ID) || w["Ataque básico"] === h.ID)
-                    .map((w) => w.Nombre).join(", ");
-                lineas = reemplazarSeccion(lineas, "Habilidades de Armas", tablaHabilidades(habilidades, nombreDe, armaDe));
-            }
-            return lineas;
+            if (!armas.length) return lineas;
+            return indiceArmas(lineas, armas, accionesComunes, reglas("Tipos de armas"), nombreDe);
         },
         consumibles: (lineas) => {
             const consumibles = filas("objetos", "Consumibles");
@@ -482,6 +567,17 @@ async function sincronizar({ datos, leer, escribir, listar, log }) {
             const traumas = filas.filter((t) => t.Tipo === "Trauma"), virtudes = filas.filter((t) => t.Tipo === "Virtud");
             if (traumas.length) lineas = reemplazarSeccion(lineas, "Traumas Básicos", tablaTraumas(traumas, "Aflicción", mods, nombreDe));
             if (virtudes.length) lineas = reemplazarSeccion(lineas, "Virtudes", tablaTraumas(virtudes, "Virtud", mods, nombreDe));
+            return lineas;
+        },
+        habilidadesAgentes: (lineas) => {
+            const generales = filas("habilidades", "Comunes").filter((h) => !categoriasDe.has(h.ID));
+            const reacciones = filas("habilidades", "Reacciones");
+            if (generales.length) lineas = reemplazarSeccion(lineas, "**Habilidades Generales**", tablaGenerales(generales));
+            if (reacciones.length) {
+                // Otras notas enlazan a la tabla con ^tabla-reacciones; se añade una vez y luego se conserva.
+                const ancla = lineas.some((l) => l.trim() === "^tabla-reacciones") ? [] : ["^tabla-reacciones"];
+                lineas = reemplazarSeccion(lineas, "Reacciones (Secundario)", [...tablaReacciones(reacciones), ...ancla]);
+            }
             return lineas;
         },
         posturas: (lineas) => reglas("Posturas").reduce((ls, p) =>
@@ -512,6 +608,8 @@ async function sincronizar({ datos, leer, escribir, listar, log }) {
 
     resumen.idsDesconocidos = [...faltan];
     log(`Notas actualizadas: ${resumen.actualizadas.length ? resumen.actualizadas.join(", ") : "ninguna"}` +
+        (creadas.length ? `. Fichas de armas creadas: ${creadas.join(", ")}` : "") +
+        (sinCategoria.length ? `. Armas sin Categoría (van a "Otras"): ${sinCategoria.join(", ")}` : "") +
         (resumen.noEncontradas.length ? `. Notas no encontradas: ${resumen.noEncontradas.join(", ")}` : "") +
         (faltan.size ? `. IDs que no existen en las hojas: ${[...faltan].join(", ")}` : "") +
         (migradas.length ? `. Enlaces cambiados a las anclas nuevas en: ${migradas.join(", ")}` : "") +
@@ -543,6 +641,15 @@ module.exports = async (ctx = {}) => {
             datos,
             leer: async (ruta) => { const f = archivo(ruta); return f ? vault.read(f) : null; },
             escribir: (ruta, texto) => vault.modify(archivo(ruta), texto),
+            crear: async (ruta, texto) => {
+                const completa = (vault.getAbstractFileByPath(`content/${CARPETA_AGENTES}`) ? "content/" : "") + ruta;
+                const partes = completa.split("/").slice(0, -1);
+                for (let i = 1; i <= partes.length; i++) {
+                    const carpeta = partes.slice(0, i).join("/");
+                    if (!vault.getAbstractFileByPath(carpeta)) await vault.createFolder(carpeta);
+                }
+                await vault.create(completa, texto);
+            },
             listar: async () => vault.getMarkdownFiles().map((f) => f.path),
             log: (m) => new Notice(m, 15000),
         });

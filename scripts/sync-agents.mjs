@@ -4,7 +4,7 @@
 //   node scripts/sync-agents.mjs              lee los archivos de Google Sheets
 //   node scripts/sync-agents.mjs --csv <dir>  lee <dir>/<archivo>/<pestaña>.csv (archivo = agentes, habilidades, objetos, reglas)
 import { createRequire } from "node:module"
-import { readFile, writeFile, readdir } from "node:fs/promises"
+import { readFile, writeFile, readdir, mkdir } from "node:fs/promises"
 import path from "node:path"
 
 const require = createRequire(import.meta.url)
@@ -35,6 +35,10 @@ const resumen = await sync.sincronizar({
   datos,
   leer: (ruta) => readFile(path.join(contentDir, ruta), "utf8").catch(() => null),
   escribir: (ruta, texto) => writeFile(path.join(contentDir, ruta), texto),
+  crear: async (ruta, texto) => {
+    await mkdir(path.dirname(path.join(contentDir, ruta)), { recursive: true })
+    await writeFile(path.join(contentDir, ruta), texto)
+  },
   listar: async () => (await readdir(contentDir, { recursive: true })).filter((f) => f.endsWith(".md")).map((f) => f.split(path.sep).join("/")),
   log: console.log,
 })

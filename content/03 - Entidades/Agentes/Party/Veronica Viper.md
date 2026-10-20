@@ -27,12 +27,10 @@
 # Habilidades
 | **Nombre** | **Efecto** | **Coste** | **CD** | **Daño** | **[[Rangos y Áreas#Rangos\|Rango]]** | **[[Rangos y Áreas#Áreas de Daño\|Objetivo]]** |
 | --- | --- | :---: | :---: | :---: | :---: | :---: |
-| **Punto de Mira** | Dispara contra un objetivo y lo Marca. | 2 [[Estadísticas de Agentes#Puntos de Acciones\|PA]] | 2 | 1D4 Perforante | 2,5m/10m | [[Rangos y Áreas#^tabla-areas\|Objetivo]] |
+| **Punto de Mira** | Dispara contra un objetivo y lo [[Estados#^sts-marked\|Marca]]. | 2 [[Estadísticas de Agentes#Puntos de Acciones\|PA]] | 2 | 1D4 Perforante | 2,5m/10m | [[Rangos y Áreas#^tabla-areas\|Objetivo]] |
 | **Alinear** | Dispara contra los objetivos en el área. | 2 [[Estadísticas de Agentes#Puntos de Acciones\|PA]] | 3 | 1D6 Perforante | [[Rangos y Áreas#Melee\|Melee]] | [[Rangos y Áreas#^tabla-areas\|Línea]] 1m x 8m |
 | **Trampa** | Crea un área de [[Áreas de Efectos#^aoe-caltrops\|Abrojos]] que dura dos [[Turnos\|Turnos]]. | 3 [[Estadísticas de Agentes#Puntos de Acciones\|PA]] | 4 | - | [[Estadísticas de Agentes#^tabla-lanzar\|Lanzar]] | [[Rangos y Áreas#^tabla-areas\|Esfera]] 5m |
 | **Tiro Explosivo** | Crea una explosión y los objetivos tendrán que superar una [[Dados#Tiradas de Estadísticas\|Tirada]] de [[Estadísticas de Agentes#Fuerza\|Fuerza]] o será [[Estados#^sts-knocked-down\|Derribados]]. | 4 [[Estadísticas de Agentes#Puntos de Acciones\|PA]] | 3 | 2D6 Contundente | 2,5m/15m | [[Rangos y Áreas#^tabla-areas\|Esfera]] 2,5m |
-| **Mover** | El agente se moverá a la posición indicada y gastará [[Estadísticas de Agentes#Puntos de Acciones\|PAs]] en función de su [[Estadísticas de Agentes#Movimiento\|Movimiento]]. |  |  | - | - | - |
-| **Cambio de Postura** | El agente podrá elegir su [[Posturas\|Postura]]. |  |  | - | - | - |
 
 
 

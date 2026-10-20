@@ -31,8 +31,6 @@
 | **Escabullirse** | Suelta una bomba de humo en su posición y entra automáticamente en [[Sigilo\|Sigilo]]. | 3 [[Estadísticas de Agentes#Puntos de Acciones\|PA]] | 2 | - | [[Rangos y Áreas#Melee\|Melee]] | [[Rangos y Áreas#^tabla-areas\|Esfera]] 2,5m |
 | **Paso Sombrío** | Selecciona un espacio en el rango y se recoloca en ese espacio. Si el espacio lo ocupa un enemigo con el estado [[Estados#^sts-embedded-dagger\|Daga Clavada]], se le quitará el estado y te colocará en el espacio libre más cercano. | 4 [[Estadísticas de Agentes#Puntos de Acciones\|PA]] | 5 | - | 5m | [[Rangos y Áreas#^tabla-areas\|Objetivo]] |
 | **Lanzar Dagas** | Lanza una daga a un enemigo y le aplica el estado de [[Estados#^sts-embedded-dagger\|Daga Clavada]] durante 3 [[Turnos\|Turnos]]. Al acabarse el estado recuperará tantas dagas como stacks tuviera. Tendrá un máximo de dos Dagas. | 2 [[Estadísticas de Agentes#Puntos de Acciones\|PA]] | 1 | 1D6 Perforante | 7,5m/10m | [[Rangos y Áreas#^tabla-areas\|Objetivo]] |
-| **Mover** | El agente se moverá a la posición indicada y gastará [[Estadísticas de Agentes#Puntos de Acciones\|PAs]] en función de su [[Estadísticas de Agentes#Movimiento\|Movimiento]]. |  |  | - | - | - |
-| **Cambio de Postura** | El agente podrá elegir su [[Posturas\|Postura]]. |  |  | - | - | - |
 
 
 

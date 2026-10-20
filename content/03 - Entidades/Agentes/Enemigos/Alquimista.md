@@ -29,7 +29,6 @@
 | **Vial de Veneno** | Los objetivos tendrán que superar una [[Dados#Tiradas de Estadísticas\|Tirada]] de [[Estadísticas de Agentes#Constitución\|Constitución]] o sufrir el daño y estar [[Estados#^sts-poisoned\|Envenenado]] durante un [[Turnos\|Turno]] | 3 [[Estadísticas de Agentes#Puntos de Acciones\|PA]] | 2 | 1D4 Veneno | [[Estadísticas de Agentes#^tabla-lanzar\|Lanzar]] | [[Rangos y Áreas#^tabla-areas\|Esfera]] 2,5m |
 | **Debilitado** | El objetivo tendrá que superar una [[Dados#Tiradas de Estadísticas\|Tirada]] de [[Estadísticas de Agentes#Cognición\|Cognición]] o estará [[Estados#^sts-weakened\|Debilitado]] durante dos [[Turnos\|Turnos]]. | 4 [[Estadísticas de Agentes#Puntos de Acciones\|PA]] | 3 | - | 5m | [[Rangos y Áreas#^tabla-areas\|Objetivo]] |
 | **Disparo** |  | 2 [[Estadísticas de Agentes#Puntos de Acciones\|PA]] |  | 1D4 - 1 Perforante | 5m | [[Rangos y Áreas#^tabla-areas\|Objetivo]] |
-| **Mover** | El agente se moverá a la posición indicada y gastará [[Estadísticas de Agentes#Puntos de Acciones\|PAs]] en función de su [[Estadísticas de Agentes#Movimiento\|Movimiento]]. |  |  | - | - | - |
 
 
 

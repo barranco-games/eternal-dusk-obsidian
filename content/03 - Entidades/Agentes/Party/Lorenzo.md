@@ -31,8 +31,6 @@
 | **Provocar** | Los agentes en el radio deberán hacer una [[Dados#Tiradas de Estadísticas\|Tirada]] de [[Estadísticas de Agentes#Poder\|Poder]]. En caso de fallarla se les aplicará [[Estados#^sts-provoked\|Provocado]]. | 2 [[Estadísticas de Agentes#Puntos de Acciones\|PA]] | 2 | - | [[Rangos y Áreas#Melee\|Melee]] | [[Rangos y Áreas#^tabla-areas\|Esfera]] 5m |
 | **Detonación** | Golpea al objetivo y tira un dado de daño extra por cada Estado que tenga el objetivo. | 6 [[Estadísticas de Agentes#Puntos de Acciones\|PA]] | 6 | XD6 Contundente | [[Rangos y Áreas#Melee\|Melee]] | [[Rangos y Áreas#^tabla-areas\|Objetivo]] |
 | **Puñetazo** | Un golpe seco. | 2 [[Estadísticas de Agentes#Puntos de Acciones\|PA]] |  | 1D6 + [[Armas#Bonificadores de Daño (BD)\|BD]] (FUE) Contundente | [[Rangos y Áreas#Melee\|Melee]] | [[Rangos y Áreas#^tabla-areas\|Objetivo]] |
-| **Mover** | El agente se moverá a la posición indicada y gastará [[Estadísticas de Agentes#Puntos de Acciones\|PAs]] en función de su [[Estadísticas de Agentes#Movimiento\|Movimiento]]. |  |  | - | - | - |
-| **Cambio de Postura** | El agente podrá elegir su [[Posturas\|Postura]]. |  |  | - | - | - |
 
 
 
