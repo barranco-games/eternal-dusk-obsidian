@@ -257,12 +257,12 @@ Constructor args: `name, core, queryProvider, resolver, algorithm, maxRange, per
 1. `_dispatchedThisFrame.Clear()`
 2. `FlushPendingUnregisters` — deferred unregister applied at frame start
 3. `FullClear` on first frame
-4. `ClearUsedSlots` (always runs: readbacks source each area's compact buffer, not the shared slots)
+4. `ClearUsedSlots` (clears last frame's slots whether or not a readback is pending: readbacks source each area's compact buffer, not the shared slots)
 5. `SlotAllocator.Reset`
 6. `BuildSchedule` (dirty areas without a pending readback) → `CollectQueries` → `DispatchQueries` → `CompactAndRequestReadbacks`
 7. On readback complete → `ResolveArea`
 
-`CollectQueries` reuses a slot already dispatched this frame for the same algorithm and query shape. When slots run out partway through an area, it rolls the whole area back to wait for a frame where it fits, because a partial result would clear the dirty mark for the revealers it dropped.
+`CollectQueries` reuses a slot already dispatched this frame for the same algorithm and query shape. When slots run out partway through an area that is not first in the schedule, it rolls that area back to wait for a frame where it fits, because a partial result would clear the dirty mark for the revealers it dropped. An area that alone needs more slots than exist logs a warning and keeps the queries that fit.
 
 ### CollectQueries — anchor write-back
 
@@ -374,13 +374,13 @@ Fixed-field renderer for the skill area:
 **`FogWorkingBuffer`** — mmf in `temporaryCachePath`, scene lifetime, sized `chunksX × chunksY × 2 KB` for the level. The file name is per run (`FogWorking_<run>.mmf`), and files a crashed run left behind are deleted at startup once they are over a day old. All reads/writes go here. `OpenMapping`/`CloseMapping` wrap mmf creation/teardown; `Create` delegates to `OpenMapping`, `Dispose` to `CloseMapping` and deletes the file. `Zero` recreates the file. `Exists`/`Load`/`Save`/`Flush` are null-guarded against a closed accessor (the mmf is closed while a load copies the body in). The save and load copies use `FileStream` directly to avoid `MemoryMappedViewAccessor` overhead on Mono.
 
 **`FogPersistenceStore`** — one file per slot and level, `<SavePaths.Root>/AreaTiles/<slot>/fog_<levelId>.fog`: a `FogFileHeader` (chunk counts, cell size, world origin) followed by a flat copy of the working buffer.
-- Save (`StageAsync`) flushes the buffer and writes header + body to `.fog.tmp` on the thread pool. `Commit` promotes it with `File.Replace` once the main save file is on disk.
+- Save (`StageAsync`) flushes the buffer and writes header + body to `.fog.tmp` on the thread pool. `Commit` promotes it with `File.Replace` (`File.Move` for a slot's first save) once the main save file is on disk.
 - Load (`LoadAsync`) skips a file whose header or size does not match this level. Otherwise it closes the mapping, copies the body into the mmf on the thread pool, and reopens in a `finally`; `FogSavable` then calls `ReloadActiveTiles`.
 - A version-1 slot's shared `fog.fog` is discarded on load.
 
 ```
 New Game  → FogSavable.Reset → FogWorkingBuffer.Zero() (recreates the file) + clear explored states
-Save      → FlushAll (resident chunks → mmf) → Flush → header + body to .fog.tmp → Commit (File.Replace)
+Save      → FlushAll (resident chunks → mmf) → Flush → header + body to .fog.tmp → Commit (File.Replace, or File.Move the first time)
 Load      → clear states, Zero → header check → CloseMapping → copy body → OpenMapping → ReloadActiveTiles
 Quit      → FogWorkingBuffer.Dispose() (mmf deleted)
 ```
@@ -472,7 +472,7 @@ All use push-based revealers via `IEntity.OnPositionChanged`, updating only on c
 Owns the `EntityRevealable` per entity and feeds them to registered areas.
 
 - `_revealables` is populated **unconditionally** on `OnEntityRegistered`, independent of whether any area has been added yet, and that includes the constructor's initial sweep over `IEntityRegistry.All`. Only the area-adding is gated on `_areas`.
-- `AddArea` **back-fills** existing `_revealables** into the area's core and is additive. `SetAreas` no longer exists. Party sight and the skill area are added; fog and vision are not, since they track no revealables.
+- `AddArea` **back-fills** existing `_revealables` into the area's core and is additive. `SetAreas` no longer exists. Party sight and the skill area are added; fog and vision are not, since they track no revealables.
 - `OnEntityUnregistered` null-guards `_areas`.
 
 ### EntityRevealable
@@ -618,7 +618,7 @@ Lingering ground and cloud effects — fire, smoke, caltrops (`SurfaceType`). Sk
 - Merging before ticking lets a short patch absorbed into a longer one inherit the longer life.
 - With the grid `Version` unchanged, the scan, merges and reactions are skipped.
 - In combat, the phase's reading of the grid is snapshotted the frame after a world phase and planned on a worker (`SurfaceWorldPhaseJobRunner`). The next phase applies the plan only if the grid version still matches; otherwise it recomputes synchronously.
-- After the pass, `SurfaceOccupancyService` re-reads every actor's footing (any cell under its base) and runs a patch's effects on whoever entered it. A patch laid mid-round is swept on the next frame, capped at `MaxSweepPasses` (4) for patches that lay others.
+- After the pass, `SurfaceOccupancyService` re-reads every actor's footing (the centre cell, else the rim of its base; a patch wholly inside the rim and off the centre goes unseen) and runs a patch's effects on whoever entered it. A patch laid mid-round is swept on the next frame, capped at `MaxSweepPasses` (4) for patches that lay others.
 
 ### Reactions
 

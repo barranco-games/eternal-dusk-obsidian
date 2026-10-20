@@ -94,7 +94,7 @@ Health.Create(() => Stats.Derived.MaxHP);
 
 `Health` adds `OnDamaged(int taken)`. It fires only from `TakeDamage`, which wraps `ConsumeClamped`. Costs, drains and restores change health without raising it.
 
-Consumers of these events:
+Main consumers of these events:
 - `LeaderResourcePresenter` redraws the HP and AP bars from `OnChanged`. It also redraws on `Stats.OnStatChanged` when the max moved.
 - `ObstacleActor` destroys itself on `Health.OnDepleted`.
 - `ActionPointMovementBudget` clears its movement credit on `ActionPoints.OnFilled`.
@@ -127,4 +127,4 @@ resources.Register(Sanity.Create(() => Stats.Derived.MaxSanity));
 resources.Register(Ammunition.Create(initial: 0)); // unbounded: extends Resource, no max delegate
 ```
 
-No other changes are required. `ResourceTypes.Capacity`, the `ActorResources` array and state cache, and `SimulatedAgentState`'s `ResourceState[]` all derive their size from the enum at runtime.
+Beyond these steps nothing changes: `ResourceTypes.Capacity`, the `ActorResources` array and state cache, and `SimulatedAgentState`'s `ResourceState[]` all derive their size from the enum at runtime.

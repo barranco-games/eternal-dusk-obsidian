@@ -87,7 +87,7 @@ Adding a new composite damage type requires no changes to `ResistanceSet` — th
 | Evasion    | `HitChance.BaseEvasion` (5) + base + Dexterity / 10 rounded up            |
 | SightRange | base                                                                      |
 
-`Precision` (`HitChance.BasePrecision` = 95) and `Initiative` (Dexterity + d100) are `CombatStat`s queried the same way. Aptitudes are pure attribute formulas in `AptitudeFormulas` (e.g. `Discover = 25 + Cognition / 2`), also queried through the mediator. `ActorStats` raises `OnStatChanged` whenever a modifier is added or removed, and `ActorResources.TrackStats` listens to it.
+`Precision` (`HitChance.BasePrecision` = 95) and `Initiative` (Dexterity + d100) are `CombatStat`s queried the same way. Aptitudes are pure attribute formulas in `AptitudeFormulas` (e.g. `Discover = 25 + Cognition / 2`), also queried through the mediator. `StatsMediator` raises `OnStatChanged(StatType)` once per affected stat each time a modifier is added or removed (`ActorStats` forwards it), and `ActorResources.TrackStats` listens to it.
 
 ### Modifier lifetime separation
 
@@ -99,7 +99,7 @@ public override void OnApply(IActor target) => target.Stats.AddModifier(_modifie
 public override void OnRemove(IActor target) => target.Stats.RemoveModifier(_modifier);
 ```
 
-- **Status effects** (`StatModifierBehaviour`, `Dying`, `Overloaded`): the status carries a `StatusDuration`; `ActorStatusEffects` advances it each turn and calls `OnRemove` once it expires.
+- **Status effects** (`StatModifierBehaviour`, `Dying`, `Overloaded`): the status adds the modifier in `OnApply` and removes it in `OnRemove`. `StatModifierBehaviour` lasts as long as its `StatusDuration`: `ActorStatusEffects` advances the duration at the start of each owner turn and calls `OnRemove` once it expires. `Dying` is permanent until healed. `Overloaded` drops its modifier itself on its debt turn.
 - **Equipment**: `AgentEquipment` adds an item's `Modifiers` on equip and removes them on unequip.
 
 This means `StatsModifier` can be reused across different duration strategies without modification.
@@ -133,5 +133,5 @@ No coupling between the stat system and the resource system beyond this wiring p
 ## Adding a New Damage Type
 
 1. Add a flag value to `DamageType` in `Gameplay/Combat/DamageType.cs`
-2. If it is a primitive type, add a corresponding value to `Resistance` and `StatType` (offset 100), a field on `ResistanceData` and `ResistanceDataSO`, a property and `Get()` case on `ResistanceSet`, and a `(damageType & DamageType.X) != 0` line in `ResistanceSet.TotalAgainst()`
+2. If it is a primitive type, add a corresponding value to `Resistance` and `StatType` (offset 100), a field on `ResistanceData` and `ResistanceDataSO`, a property and `Get()` case on `ResistanceSet`, a `(damageType & DamageType.X) != 0` line in `ResistanceSet.TotalAgainst()`, and the `SetResistances(...)` copy in `SimulatedAgentState` (`Systems/AI/Simulation`), so the AI simulation sees it
 3. If it is composite, define it as a combination of existing flags — `TotalAgainst` handles it automatically

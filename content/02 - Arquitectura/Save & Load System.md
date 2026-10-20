@@ -1,6 +1,6 @@
 ## Overview
 
-The save system is built around explicit ownership and a clear separation between what the save system *knows about* and what it *contains*. Only a small number of root savables register into `SaveRegistry`. Everything else is owned and captured recursively by its root.
+The save system is built around explicit ownership and a clear separation between what the save system *knows about* and what it *contains*. Only a small number of root savables register into `SaveRegistry`. Everything else is owned and captured by the world or player root.
 
 The system operates in two phases:
 
@@ -13,7 +13,7 @@ The system operates in two phases:
 
 ### Ownership
 
-Every savable entity is owned by exactly one root. Roots are the only things that register into `SaveRegistry`. The registry stays lean — one entry per logical system.
+Every savable is a root: it owns its state and registers into `SaveRegistry`, either once at the composition root or per level. Entities are owned by `WorldState` or `PlayerState` and never register. The registry stays lean — one entry per logical system.
 
 | State | Owner |
 |---|---|
@@ -21,7 +21,7 @@ Every savable entity is owned by exactly one root. Roots are the only things tha
 | Props, chests, doors, items, and runtime-spawned entities such as enemies | `WorldState` |
 | Party members, not-yet-joined roster agents, quest and flag progression | `PlayerState` |
 | Surface patches and who stands in them | `SurfaceSavable` (registered per level by `AreaService`) |
-| Fog of war | `FogSavable` (registered per level by `AreaService`; the data lives in a per-slot side file) |
+| Fog of war | `FogSavable` (registered by `AreaService` only for a level with fog of war enabled; the data lives in a per-slot side file) |
 | Articy global variables | `ArticyGlobalsSavable` |
 | Position of the dice stream | `DiceSavable` |
 
@@ -40,9 +40,9 @@ Each persistent entity carries two identifiers:
 
 For scene-placed entities, `EntityId` is managed through `SerializableEntityId` in the Inspector — a Unity-serializable wrapper with a custom property drawer that auto-generates a GUID on first display and warns if a duplicate is detected in the scene. `PrefabId` is managed through `SerializablePrefabId`, which warns if the value is empty or not found in `PrefabRegistryDefinition`.
 
-For runtime-spawned entities, `EntityFactory.CreateNew` calls `EntityId.Generate()` (unless the caller passes an id) and assigns it with `AssignEntityId`. The id is saved in the `WorldEntityEnvelope` next to the `PrefabId`, so it survives a reload. The `PrefabId` is the one the factory loaded the prefab with from `IPrefabRegistry`.
+For runtime-spawned entities, `EntityFactory.CreateNew` calls `EntityId.Generate()` (unless the caller passes an id) and assigns it with `AssignEntityId`. The id is saved in the `WorldEntityEnvelope` next to the `PrefabId`, so it survives a reload. The `PrefabId` is the one authored on the prefab, which must match the id the prefab is registered under in `IPrefabRegistry`.
 
-`RestoreScene` matches on `EntityId`, not `PrefabId`, so multiple instances of the same prefab are unambiguous. `PrefabId` is only used by `WorldEntityLoadStep` when re-instantiating runtime-spawned entities that have no live match (`GetUnmatchedEnvelopes` → `EntityFactory.CreateFromEnvelope`) — scene-placed entities are already in the scene and do not need prefab resolution.
+`RestoreScene` matches on `EntityId`, not `PrefabId`, so multiple instances of the same prefab are unambiguous. `PrefabId` is what `WorldEntityLoadStep` uses to re-instantiate runtime-spawned entities that have no live match (`GetUnmatchedEnvelopes` → `EntityFactory.CreateFromEnvelope`). It is not used to match scene-placed entities, which are already in the scene.
 
 ### Root registration
 
@@ -61,7 +61,7 @@ private void OnContainerBuilt(Container container)
 }
 ```
 
-`WorldState` and `PlayerState` are resolved through their interfaces and cast to `ISavable` for registration. `FogSlotCleaner` saves nothing: it only purges a deleted slot's fog, because `FogSavable` is registered only while a fogged level is loaded. Per-level savables (`SurfaceSavable`, `FogSavable`) are registered by `AreaService` when the level's areas start and unregistered when it tears down; `SaveRegistry.Unregister` removes a savable only if it still holds its id, so a scene unloading after the next one registered keeps the newer one. World entities do not register at all: they track themselves into `IWorldState` through `EntityRegistry.Track`, keyed by `gameObject.scene.name`.
+`WorldState` and `PlayerState` are resolved through their interfaces and cast to `ISavable` for registration. `FogSlotCleaner` saves nothing: it only purges a deleted slot's fog, because `FogSavable` is registered only while a fogged level is loaded. Per-level savables are registered by `AreaService` when the level's areas start: `SurfaceSavable` for every level, `FogSavable` only when the level has fog of war enabled (`Prison_Cells_Start` and `DemoArena` have it off). Both are unregistered when the level tears down; `SaveRegistry.Unregister` removes a savable only if it still holds its id, so a scene unloading after the next one registered keeps the newer one. World entities do not register at all: `EntityFactory` hands them to `EntityRegistry.Track`, which tracks them into `IWorldState` under the registry's own scene name (`gameObject.scene.name`).
 
 ### Savables and persistable entities
 
@@ -76,14 +76,14 @@ There are two kinds of persistent thing, and the split keeps MonoBehaviours out 
 
 A save is one `SaveFile` per slot: `Metadata` plus the list of `SaveEnvelope`s the registry captured. The file is a JSON file (Newtonsoft, indented) at `<persistent data>/Saves/<SlotId>.json`. In the editor the root is a subfolder named after the project checkout, so parallel editors keep separate saves. Fog is a side file at `AreaTiles/<SlotId>/<areaTypeId>.fog`.
 
-- **Identity** — `SaveFileMetadata.SlotId` is minted once in `GameStateService.NewGame` as `{sanitized name}_{yyyyMMdd_HHmmss}` (`SlotNaming.BuildSlotId`, with a `_2` suffix on a collision). It names the save file and the fog folder and never changes. `SaveName` is only a display label (32 characters at most); renaming rewrites the file's metadata and moves nothing. `SaveFile` carries no separate slot id.
+- **Identity** — `SaveFileMetadata.SlotId` is minted once in `GameStateService.NewGame` as `{sanitized name}_{yyyyMMdd_HHmmss}` (`SlotNaming.BuildSlotId`; `GameStateService.UniqueSlotId` appends `_2`, `_3`, … on a collision). It names the save file and the fog folder and never changes. `SaveName` is only a display label (32 characters at most); renaming rewrites the file's metadata and moves nothing. `SaveFile` carries no separate slot id.
 - **Metadata** — `SchemaVersion`, `GameVersion`, `SlotId`, `SaveName`, `PlayTimeSeconds`, `CreatedAt`, `SavedAt`. Slot listings read only this header (`SaveFileHeader`) and sort by `SavedAt`, newest first. A file whose `SlotId` does not match its filename is left out of the list.
 - **Refusing a newer save** — load and rename refuse a save with a higher `SchemaVersion`, or one written by a newer game version.
 - **Write** — the save is written to `<SlotId>.tmp` and then promoted over `<SlotId>.json` with `File.Replace`. The file it replaces becomes `<SlotId>.bak`. A rename keeps the existing `.bak`. There are no snapshots: each save overwrites the slot it loaded.
 - **Slot-scoped side data** — a savable that keeps data outside the envelope (fog) stages it during `CaptureAsync`, promotes it in `ISavable.CommitSlot(slotId)` after the file is written, and purges it in `ISavable.DeleteSlot(slotId)`.
 - **Slot screen** — the main menu's Continue entry (shown only while a slot exists) opens a screen to list, load, rename and delete slots, driven by `SaveSlotsPresenter` through `IGameStateService.ListSlotsAsync`, `LoadAsync`, `RenameSlotAsync` and `DeleteSlotAsync`.
 
-What a slot holds, by envelope: scene name (`session_state`), party, roster and progression (`player_state`), world entities per scene (`world_state`), surfaces (`surfaces`), fog (`FogOfWar`, the envelope is a marker and the data is the side file), Articy globals (`ArticyGlobals`) and the dice stream (`Dice`). Dice are saved so that reloading cannot re-roll a check or a hit.
+What a slot holds, by envelope: scene name (`session_state`), party, roster and progression (`player_state`), world entities per scene (`world_state`), surfaces (`surfaces`), fog (`FogOfWar`, only for levels with fog enabled; the envelope is a marker and the data is the side file), Articy globals (`ArticyGlobals`) and the dice stream (`Dice`). Dice are saved so that reloading cannot re-roll a check or a hit.
 
 ---
 
@@ -96,7 +96,7 @@ GameStateService.SaveAsync(ct)            ← saves Current, to its own slot
   │
   ├── SaveRegistry.GetAll()               ← a snapshot, since savables register as levels load
   │     SaveSessionState, PlayerState, WorldState, ArticyGlobals, Dice,
-  │     and while a level is loaded: Surfaces, FogOfWar
+  │     and while a level is loaded: Surfaces, plus FogOfWar if the level has fog
   │
   ├── foreach savable → savable.CaptureAsync(envelopeSerializer, ct)
   │     SaveSessionState → captures current scene name
@@ -115,7 +115,7 @@ Saves are serialized: a save, a rename or a delete waits for the one in flight (
 
 Triggers:
 
-- **Autosave on unload** — `SaveGameStateStep.Shutdown` calls `SaveAsync` when its level unloads, unless the run is lost (`IsDefeat`), in combat, or in an encounter, where Continue resumes from the last save. Only levels that list `SaveGameStateStep` autosave (`ILevelLoader.Autosaves`): `Prison_Cells_Start` does, `DemoArena` does not.
+- **Autosave on unload** — `SaveGameStateStep.Shutdown` calls `SaveAsync` when its level unloads, unless the run is lost (`IsDefeat`), in combat, or in an encounter, where Continue resumes from the last save. Only levels that list `SaveGameStateStep` autosave (`ILevelLoader.Autosaves`): `Prison_Cells_Start`, `ScenarioBoot` and `SkillLab` do; `DemoArena` does not.
 - **Save on quit** — `SaveOnQuit` holds a player's quit back while a level that autosaves is loaded, runs that level's unload (and so its autosave, with a 30 s timeout) and then quits. It is inactive in the editor and in batch mode.
 - **Not on a new game or a load** — both set an abandon flag, so the level they unload does not write itself into the fresh or just-loaded slot.
 
@@ -128,8 +128,8 @@ GameStateService.LoadAsync(slotId)
   │
   ├── SaveService.LoadHeader   ← refuse a newer schema or game version
   ├── SaveService.LoadAsync → SaveFile
-  ├── the registered ISceneRestorable (SaveSessionState) restores its envelope   ← now knows SceneToRestoreOn
   ├── Current = save   (rolled back if the load fails)
+  ├── the registered ISceneRestorable (SaveSessionState) restores its envelope   ← now knows SceneToRestoreOn
   │
   ├── scene already open with no level loaded (a boot save)
   │     └── LevelLoader.LoadLevelAsync in place, no transition
@@ -162,7 +162,7 @@ GameStateService.LoadAsync(slotId)
                           → restores party members from PlayerState.LastRestoredData
 ```
 
-Savables are registered before the pipeline runs, and `WorldEntityLoadStep` runs after `LoadGameStateStep`, so the world's stored envelopes are in place before any entity is matched. `EntityRegistry` keys entities by `gameObject.scene.name`, and `WorldEntityLoadStep` throws if the level definition's `SceneName` differs from the loaded scene, since entities would otherwise be looked up under a key nothing wrote. A savable only some levels register (fog) is absent from a save made elsewhere; the save carries its last envelope over unchanged.
+Savables are registered before the pipeline runs, and `WorldEntityLoadStep` runs after `LoadGameStateStep`, so the world's stored envelopes are in place before any entity is matched. `EntityRegistry` keys entities by its own scene name (`gameObject.scene.name`), and `WorldEntityLoadStep` throws if the level definition's `SceneName` differs from the loaded scene, since entities would otherwise be looked up under a key nothing wrote. A savable only some levels register (fog) is absent from a save made elsewhere; the save carries its last envelope over unchanged.
 
 ---
 

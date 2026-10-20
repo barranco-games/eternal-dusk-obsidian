@@ -227,7 +227,7 @@ if (walked && _agents.ContainsKey(agentId))
 
 ### Dash — skill-driven movement
 
-`Dash(agentId, route, speedScale, source)` runs a skill's caster along a route the skill has already checked, inside the skill's own activity. It does no planning, gates, budget, `Begin` or ledger entry, and fires no movement events. It sits in the in-flight table like a walk, so unregistering the agent or disposing the service stops it. `Cancel` skips it, and both `RequestMove` and a second `Dash` are refused while it runs (`GateRejected(ActivityConflict)`). Only the agent leaving the game cuts it short. An executor that gives up partway still counts as run (`Completed` with `PlanStatus.Partial`).
+`Dash(agentId, route, speedScale, source)` runs a skill's caster along a route the skill has already checked, inside the skill's own activity. It does no planning, gates, budget, `Begin` or ledger entry, and fires no movement events. It sits in the in-flight table like a walk, so unregistering the agent or disposing the service stops it. `Cancel` skips it, and both `RequestMove` and a second `Dash` are refused while it runs (`GateRejected(ActivityConflict)`). Only the agent being unregistered or re-registered, or the service being disposed, cuts it short. An executor that gives up partway still counts as run (`Completed` with `PlanStatus.Partial`).
 
 ---
 
@@ -247,7 +247,7 @@ caster exists → skill known → SkillAvailability.BlockedReason:
 → not in a dialogue
 ```
 
-`SkillAvailability` is shared with the skill bar, so a greyed button is exactly a cast the service would refuse. The refusal strings live in `SkillRefusals`.
+`SkillAvailability` is shared with the skill bar, so a greyed button is exactly a cast the service would refuse. The availability refusal strings live in `SkillRefusals`.
 
 ### Pre-empt — honour the result
 
@@ -287,15 +287,15 @@ A caller such as an AI turn or the scenario harness can pass `driverOverride` to
 
 Once resources are spent the cast is **released**. A player's cast re-registers its slot as `Cinematic`, superseding its own entry without `TryInterrupt`. From then on nothing can interrupt it: not cancel input, not a status effect, not another skill. `SkillSequencer` then runs the steps authored on the skill's `SkillSequence`, in order:
 - cue steps go to `ISkillCuePlayer` (VFX, audio, pose)
-- projectile and wait steps await the game clock
+- projectile steps await the effect reaching its first target (at once if it does not travel); wait and repeat steps await the game clock
 - `MoveCasterStep` dashes the caster through `MovementService.Dash` ([[Action System#6. MovementService|§6]])
-- each `StrikeStep` resolves the skill's effects with one hit roll per target and raises `OnSkillHit` per target
+- each `StrikeStep` resolves the skill's effects: an attack rolls to hit each target other than its caster, anything else reaches every target. `OnSkillHit` fires per target, missed ones flagged; a ground skill resolves once against its point
 
 The released steps take no cancellation token. Only the caster leaving the game mid-move stops the sequence (`CasterLeft` failure, nothing recorded). Every release ends in exactly one of `OnSkillExecuted` or `OnSkillCancelled`, even when an effect throws.
 
 ### Cancellation
 
-Only the aim can be cancelled. If `Acquire` is cancelled, the service raises `OnSkillCancelled`, plays the sequence's `OnCancel` cues and rethrows `OperationCanceledException` out of `UseSkill`. The `Begin` scope disposes (slot freed), but `_ledger.Record` is never reached. A cancelled skill records nothing, consistent with the non-cancelled-terminal rule. A refusal after the aim takes the same cancel path and returns `ActionResult.Failed` without spending anything. Those refusals are: no ground point, an AI target out of range or sight, blocked after aim, or resources short.
+No input, status effect or other skill can cancel a released cast; only the aim yields. If `Acquire` is cancelled, the service raises `OnSkillCancelled`, plays the sequence's `OnCancel` cues and rethrows `OperationCanceledException` out of `UseSkill`. The `Begin` scope disposes (slot freed), but `_ledger.Record` is never reached. A cancelled skill records nothing, consistent with the non-cancelled-terminal rule. A refusal after the aim takes the same cancel path and returns `ActionResult.Failed` without spending anything. Those refusals are: no ground point, an AI target out of range or sight, blocked after aim, or resources short. A release that cannot finish (the caster left, an effect threw) also ends in `OnSkillCancelled` and records nothing.
 
 ### CancelSkill — scoped to actual skills
 
@@ -427,8 +427,8 @@ The pipeline is also an `IInteractionApproach`. `TryGetApproach` asks the handle
 This handler is what [[Action System#7. SkillService|§7]]'s awaited target acquisition resolves against. `Begin(caster, strategy, session, completion)` opens a session:
 
 - **Self-target** highlights the caster directly and waits.
-- **Single / multi** drive the skill area: `SkillAreaService.BeginTargeting(caster, range)`, subscribe `OnAreaChanged`, and on every change recompute the desired candidate set as `InAreaEntities` filtered by the strategy (excluding the caster for single/multi), diffing it against the currently highlighted set to add and clear highlights.
-- **Area / ground** strategies drive the same skill area. A click on any highlighted entity confirms an area aim, and a ground skill lands at the clicked entity's position when it is in range. Clicking an already-picked target settles for the targets picked so far.
+- **Single / multi** drive the skill area: `SkillAreaService.BeginTargeting(caster, range)`, subscribe `OnAreaChanged`, and on every change recompute the desired candidate set as `InAreaEntities` filtered by the strategy (excluding the caster for single/multi), diffing it against the currently highlighted set to add and clear highlights. Clicking an already-picked target settles for the targets picked so far.
+- **Area / ground** strategies drive the same skill area. A click on any highlighted entity confirms an area aim, and a ground skill lands at the clicked entity's position when it is in range.
 
 While a session is open, `TryHandle` claims **every** entity click. Clicking a highlighted candidate adds it via `session.TryAdd` and marks it selected; when the session reports complete it resolves the `UniTaskCompletionSource<TargetData>` and tears down. Clicking a non-candidate entity is still claimed (returns `true`) so stray clicks don't leak through to dialogue or pickup mid-targeting. `End` releases the highlights and ends the skill-area session; `EndIfCurrent` does so only if the supplied completion is the live one, guarding against a stale cancellation tearing down a newer session.
 
@@ -450,14 +450,14 @@ public bool TryHandle(IEntity target, InteractionContext context)
 
 - The handler does **not** call `StartOn` — the service does, after acquiring both locks ([[Action System#8. DialogueService|§8]]).
 - The initiator is `context.Interactor`. The handler passes a scene-lifetime token, cancelled when the scene container disposes the handler, so an open conversation closes on unload. Otherwise teardown is driven by the registry interrupt callbacks (status, pre-empt). A click elsewhere during the approach cancels the walk, and the conversation with it.
-- `TryHandle` claims synchronously, while `StartDialogue` may still return `Refused` (in combat, or against a non-interruptible owner). The click is consumed even when no conversation opens.
+- `TryHandle` claims synchronously, while `StartDialogue` may still return `Refused` (in combat, or against a non-interruptible owner or initiator). The click is consumed even when no conversation opens.
 
 ### ItemPickupService
 
 Claims any `IItem` for the party leader. The pickup itself is an instantaneous action with no registry slot, so it is **not** an activity, but reaching the item may take a movement activity:
 
 - **Refusals first.** These cases raise `Refused(picker, prefab, PickUpRefusal)` and still claim the click: an unknown item definition, a turn on which the player may not act, full hands (equipment), or nobody to fire the ammo (consumables).
-- **Reach.** Within 1.5 m planar and 1.5 m in height, the item is taken at once. Otherwise the leader walks to the first reachable stop out of up to four candidates near the item, and takes it on arrival. A cancelled walk drops the pickup silently; failing to arrive refuses with `OutOfReach`.
+- **Reach.** Within 1.5 m planar and 1.5 m in height, the item is taken at once. Otherwise the leader walks to the first reachable stop out of up to four candidates near the item, and takes it on arrival. A cancelled or superseded walk drops the pickup silently; failing to arrive refuses with `OutOfReach` (`NotNow` if it is no longer the player's turn on arrival).
 - **Take.** An equipment item is `TryEquip`ped with its `LoadedAmmo` (`-1` for a non-ammo item). A `ConsumedOnPickup` item adds its ammo supply to a ranged carrier and grants its skills. On success the service records `PickUpItemPayload(prefabId, ammo)`, plays the pickup sound and despawns the item. An item with a dialogue plays it through `DialogueService.StartDialogue` with no owner. It plays before the pickup, and a cancelled conversation abandons the pickup; an item flagged `DialogueAfterPickup` plays it 0.3 s after instead.
 
 `Drop(agent, at, ct, item)` is the asynchronous inverse. It spawns the world item, then unequips (despawning the spawn if that fails), restores its ammo, and records `DropItemPayload` against the dropping agent.
@@ -609,7 +609,7 @@ Every terminal path routes through `Complete`, so `OnCompleted` fires exactly on
     
 - **`CancelInFlight` does not dispose the CTS.** It cancels and removes the in-flight entry; the awaiting `RequestMove` disposes its own CTS in its `finally`. Disposing in both places would double-dispose.
     
-- **A released skill is never cancelled.** Only the aim yields. After release a player's cast holds a `Cinematic` slot, its sequence steps take no token, and its dash ignores `Cancel` and refuses competing moves. Only the caster leaving the game stops it. A cut-short skill gets no refund path; the rule is to close the cancel path instead.
+- **Nothing that holds the slot cancels a released skill.** Only the aim yields. After release a player's cast holds a `Cinematic` slot, its sequence steps take no token, and its dash ignores `Cancel` and refuses competing moves. Only the caster leaving the game aborts it, and then it raises `OnSkillCancelled`, not a ledger record. A cut-short skill gets no refund path; the rule is to close the cancel path instead.
     
 - **Eligibility gates run before cancel-and-replan.** A rejected request must never tear down a healthy in-flight move. Order is: registry and status gates → dash / dedup → plan → rule gates → `CancelInFlight` → register new.
     

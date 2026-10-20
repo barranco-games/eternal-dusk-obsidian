@@ -123,9 +123,9 @@ Estas convenciones mantienen el código consistente y fácil de leer para todo e
 
 - El proyecto está escrito en C# sobre el entorno de scripting de Unity.
     
-- La sangría usa tabulaciones. Las llaves siguen el estilo Allman, con cada llave en su propia línea. Los archivos no terminan con una línea en blanco.
+- La sangría usa tabulaciones. Las llaves siguen el estilo Allman, con cada llave en su propia línea. Los archivos no terminan con un salto de línea final (un analizador lo marca).
     
-- Los namespaces tienen ámbito de bloque y reflejan la arquitectura, EternalDusk.<Layer>.<Area> (por ejemplo EternalDusk.Systems.UI.Dialogue). El primer segmento después de la raíz es siempre la capa.
+- Los namespaces tienen ámbito de bloque y reflejan la arquitectura, `EternalDusk.<Layer>.<Area>` (por ejemplo EternalDusk.Systems.UI.Dialogue). El primer segmento después de la raíz es siempre la capa.
     
 - Un tipo principal por archivo. Un pequeño tipo auxiliar estrechamente relacionado (un enum o struct de apoyo) puede compartir el archivo.
     
@@ -240,7 +240,7 @@ Las dependencias se resuelven a través de Reflex, y la UI sigue una separación
 
 ### Pruebas y determinismo
 
-- Las pruebas reflejan las capas: un ensamblado EditMode por capa (EternalDusk.Tests.EditMode.Core, …Gameplay, …Systems, …Engine) más EternalDusk.Tests.PlayMode. Las de EditMode usan el namespace EternalDusk.Tests.<Layer>.<Area>.
+- Las pruebas reflejan las capas: un ensamblado EditMode por capa (EternalDusk.Tests.EditMode.Core, …Gameplay, …Systems, …Engine) más EternalDusk.Tests.PlayMode. Las de EditMode usan el namespace `EternalDusk.Tests.<Layer>.<Area>`.
     
 - Una clase de prueba por clase de producción; los métodos se nombran Method_Scenario_Outcome.
     
@@ -259,7 +259,7 @@ Estas son las bibliotecas de terceros de las que depende el proyecto.
 |UniTask|2.5.11|async/await eficiente en asignaciones para Unity; se usa en todas las capas para trabajo distribuido en fotogramas y trabajo asíncrono.|MIT|
 |Articy|Draft X|Autoría de narrativa y diálogos; las entidades se enlazan con objetos de Articy y poseen conversaciones.|Propietario|
 |FMOD|2.03.14|Middleware de audio para música adaptativa y efectos de sonido, integrado a través de la capa Engine.|Propietario|
-|Odin Inspector|4.0.2.3|Atributos de inspector (BoxGroup, etc.) y ventanas de editor para los componentes y assets de la capa Engine; las capas internas no lo usan.|Propietario|
+|Odin Inspector|4.0.2.3|Atributos de inspector (BoxGroup, etc.) y drawers de editor para los componentes y assets de la capa Engine; las capas internas no lo usan.|Propietario|
 
   
 
@@ -347,15 +347,15 @@ TODO: Un diagrama de arquitectura debe acompañar esta sección.
 
 ## 2.7 Política de ramas
 
-El modelo de ramas usa ramas de larga duración master y develop con ramas de corta duración para funcionalidades y correcciones ([Representación Visual](https://drive.google.com/file/d/1h5U6k1IXgpsnfa_IcXHHb-gEemEMg2k8/view)). Ninguna de las dos ramas largas acepta push directo: todo el trabajo entra por pull request.
+El modelo de ramas usa ramas de larga duración master y develop con ramas de corta duración para funcionalidades y correcciones ([Representación Visual](https://drive.google.com/file/d/1h5U6k1IXgpsnfa_IcXHHb-gEemEMg2k8/view)). Por norma del equipo, ninguna de las dos ramas largas recibe push directo: todo el trabajo entra por pull request (el repositorio no puede imponerlo con protección de ramas).
 
 ### Ramas
 
-- master: la rama estable; cada fusión en master es una versión publicada.
+- master: la rama estable; cada versión publicada se fusiona aquí (y alguna corrección urgente, con una rama hotfix/…-master).
     
 - develop: la rama base y de integración; las pull requests apuntan aquí.
     
-- <tipo>/…: ramas de corta duración para un solo cambio.
+- `<tipo>/…`: ramas de corta duración para un solo cambio.
     
 - release/x.y.z: lleva develop a master en cada versión (véase 2.10).
     
@@ -366,15 +366,15 @@ Las ramas de corta duración siguen este patrón:
 
 |   |
 |---|
-|<type>/<branch-name>|
+|`<type>/<branch-name>`|
 
   
 
-- <type>: el tipo de cambio: feature (o feat), fix, perf, refactor, cleanup, chore, ci, test o docs; release para una versión.
+- `<type>`: el tipo de cambio: feature (o feat), fix, perf, refactor, cleanup, chore, ci, test, docs o tooling; hotfix para una corrección urgente a master; release para una versión.
     
-- Cuando el cambio sale de una fila del tablero de revisión, el nombre empieza por el id de esa fila (fix/sav-1-autosave-and-dice); las ramas no se vinculan a issues de GitHub.
+- Cuando el cambio sale de una fila del tablero de revisión, el nombre empieza por el id de esa fila (fix/sav-1-autosave-and-dice); las ramas ya no suelen vincularse a issues de GitHub.
     
-- <branch-name>: un nombre corto, en inglés y kebab-case, que nombra el cambio.
+- `<branch-name>`: un nombre corto, en inglés y kebab-case, que nombra el cambio.
     
 
 Por ejemplo:
@@ -387,9 +387,9 @@ Por ejemplo:
 
 ### Fusiones y comprobaciones
 
-- Las pull requests a develop se fusionan con squash; la de una versión (release/x.y.z a master) y la que devuelve master a develop después se fusionan con un commit de fusión, para que las dos historias no se separen.
+- Las pull requests a develop se fusionan con squash; la de una versión (release/x.y.z a master) y la que devuelve master a develop después se fusionan con un commit de fusión (desde 0.1.5), para que las dos historias no se separen.
     
-- Las comprobaciones corren en GitHub Actions sobre un runner autoalojado: Tests (EditMode y PlayMode, con cobertura) en cada pull request no borrador a develop o master, en cada push a esas ramas y cada día sobre develop; Player build en las pull requests a master y en las de develop que cambian lo que compila el reproductor (véase 2.9); Code location y Agent tooling en cada cambio. El plan del repositorio no admite protección de ramas, así que las comprobaciones son orientativas: Develop gate marca como pendientes las pull requests a develop mientras corre la verificación de una fusión en develop.
+- Las comprobaciones corren en GitHub Actions sobre un runner autoalojado: Tests (EditMode y PlayMode, con cobertura) en cada pull request no borrador a develop o master y en cada push a esas ramas que cambie Assets (salvo Assets/Art), Packages o ProjectSettings, y cada día sobre develop; Player build en las pull requests a master y en las de develop que cambian lo que compila el reproductor (véase 2.9); Code location en las pull requests a develop y master y en los pushes a master; Agent tooling en pull requests y pushes. El plan del repositorio no admite protección de ramas, así que las comprobaciones son orientativas: Develop gate marca como pendientes las pull requests a develop mientras corre la verificación de una fusión en develop.
     
 
 ### Git LFS
@@ -428,11 +428,11 @@ Coste estimado de CPU en el hilo principal de la actualización del Sistema de �
 
 En memoria, el Sistema de Áreas presupuesta aproximadamente ~79 MB, unos ~17 MB en la GPU y ~62 MB en la CPU, donde los constructores de mallas de niebla y visión dominan con ~55 MB. Un presupuesto de memoria para todo el proyecto está aún por definir.
 
-### Mediciones (0.1.5)
+### Mediciones (0.1.5, candidata)
 
-La auditoría de rendimiento del 06/10/2026, repetida el 17/10/2026 con el mismo escenario para 0.1.1, 0.1.2 y 0.1.5, tomó las primeras capturas del perfilador. Son capturas en el editor sobre DemoArena a 1080p: arranque, diálogo, exploración, saltos de cámara, un combate de tres rondas, guardar y cargar. No sustituyen a las mediciones en el hardware objetivo, pero ya acotan los presupuestos de arriba.
+La auditoría de rendimiento del 06/10/2026, repetida el 17/10/2026 con el mismo escenario para 0.1.1, 0.1.2 y dos capturas de 0.1.5 (antes y después de la candidata a versión), amplía las capturas del perfilador previas (editor, 27/09; build de jugador, 02/10). Son capturas en el editor sobre DemoArena a 1080p: arranque, diálogo, exploración, saltos de cámara, un combate de tres rondas, guardar y cargar. No sustituyen a las mediciones en el hardware objetivo, pero ya acotan los presupuestos de arriba.
 
-|Métrica|0.1.5|Notas|
+|Métrica|0.1.5 (candidata)|Notas|
 |---|---|---|
 |CPU del hilo principal, media en juego|~2.1 ms|Frente a los 16.7 ms del presupuesto de fotograma.|
 |Fotogramas de juego por encima de 16.7 ms|0|En todas las versiones medidas.|
@@ -440,7 +440,7 @@ La auditoría de rendimiento del 06/10/2026, repetida el 17/10/2026 con el mismo
 
 ## 2.9 Método de entrega de la build
 
-Las builds se producen de forma automatizada en GitHub Actions, sobre un runner autoalojado en el PC de un miembro del equipo, que solo atiende trabajos mientras su sesión (run.cmd) está abierta. El workflow Player build (.github/workflows/player-build.yml) compila el reproductor de Windows x64 en release con IL2CPP (SmokeBuild.BuildAndExit) y juega en él una partida nueva (-smoke) como prueba de humo. Se dispara en cada fusión en master (una versión), en cada pull request a master, en las pull requests a develop que cambian lo que compila el reproductor, cada lunes sobre develop y a mano. Solo se suben los logs (7 días en pull requests, 30 en el resto); el ejecutable no se publica. Siguen abiertas estas decisiones:
+Las builds se producen de forma automatizada en GitHub Actions, sobre un runner autoalojado en el PC de un miembro del equipo, que solo atiende trabajos mientras su sesión (run.cmd) está abierta. El workflow Player build (.github/workflows/player-build.yml) compila el reproductor de Windows x64 en release con IL2CPP (SmokeBuild.BuildAndExit) y juega en él una partida nueva (-smoke) como prueba de humo. Se dispara en cada push a master, en cada pull request a master, en las pull requests a develop que cambian lo que compila el reproductor, cada lunes sobre develop y a mano. Solo se suben los logs (7 días en pull requests, 30 en el resto); el ejecutable no se publica. Siguen abiertas estas decisiones:
 
 - Las builds de macOS y Linux: hoy solo se compila Windows.
     
@@ -451,7 +451,7 @@ Las builds se producen de forma automatizada en GitHub Actions, sobre un runner 
 
 ## 2.10 Lista de versiones TODO:
 
-La hoja de ruta más allá de 0.2.0 aún no está definida; cuando el equipo acuerde los hitos, cada versión planificada y sus funcionalidades objetivo se listan aquí. Una versión se publica fusionando una rama release/x.y.z en master con un commit de fusión que sube bundleVersion (ProjectSettings), y se etiqueta Release_x.y.z; después master vuelve a develop, también con un commit de fusión.
+La hoja de ruta más allá de 0.2.0 aún no está definida; cuando el equipo acuerde los hitos, cada versión planificada y sus funcionalidades objetivo se listan aquí. Desde 0.1.5, una versión se publica fusionando una rama release/x.y.z en master con un commit de fusión que sube bundleVersion (ProjectSettings), y se etiqueta Release_x.y.z; después master vuelve a develop, también con un commit de fusión. Las versiones anteriores se cortaron con squash, con commit directo o, en 0.1.2, también con un commit de fusión.
 
 |Versión|Funcionalidades planificadas|Fecha objetivo|Estado|
 |---|---|---|---|
@@ -552,7 +552,7 @@ El planificador no es GOAP sino una búsqueda en haz best-first sobre estados de
 
 El planificador encaja con la arquitectura existente. Cada rama trabaja sobre su propia copia de un estado del pool (SimulatedWorldState, SimulatedAgentState, SimulationStatePool), con los recursos guardados como snapshots de valor ResourceState del sistema de Recursos (sección 2.6). Así evalúa acciones hipotéticas sin mutar el estado del juego en vivo y solo asigna cuando el pool se queda corto, como pide el objetivo de simulación segura para IA de la sección 2.2.
 
-Los objetivos se editan por agente en AgentDefinitionSO como AIGoalData (prioridad y un multiplicador por término de puntuación). GoalSelector juega el de mayor prioridad disponible; sin objetivos editados, el agente juega KillTarget, que hoy es el único AIGoalKind. Es hostil cualquier IAgent que no esté en el grupo (PartyService), y los enemigos de un encuentro comparten lo que ven del grupo hasta que acaba. Quedan por diseñar más tipos de objetivo, las facciones, el disparador de aggro fuera de los encuentros guionizados y que los planes tengan en cuenta la probabilidad de impacto.
+Los objetivos se editan por agente en AgentDefinitionSO como AIGoalData (prioridad y un multiplicador por término de puntuación). GoalSelector juega el de mayor prioridad disponible; sin objetivos editados, el agente juega KillTarget, que hoy es el único AIGoalKind. Para el grupo, es hostil cualquier IAgent que no esté en él y no sea neutral (PartyService.AreHostile), y los enemigos de un encuentro comparten lo que ven del grupo hasta que acaba. Quedan por diseñar más tipos de objetivo, las facciones, el disparador de aggro fuera de los encuentros guionizados y que los planes tengan en cuenta la probabilidad de impacto.
 
 # 4. Referencias
 
