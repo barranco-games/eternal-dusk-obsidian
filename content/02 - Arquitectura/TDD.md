@@ -10,7 +10,7 @@ A party-based cosmic-horror investigation CRPG
 |---|---|
 |Estudio / Equipo|Barranco Games|
 |Autor(es)|Sergio Marchena, Carlos Márquez|
-|Última actualización|Junio 2026|
+|Última actualización|Octubre 2026|
 |Estado|Documento vivo, v1.0|
 
   
@@ -123,28 +123,28 @@ Estas convenciones mantienen el código consistente y fácil de leer para todo e
 
 - El proyecto está escrito en C# sobre el entorno de scripting de Unity.
     
-- La sangría usa tabulaciones. Las llaves siguen el estilo Allman, con cada llave en su propia línea.
+- La sangría usa tabulaciones. Las llaves siguen el estilo Allman, con cada llave en su propia línea. Los archivos no terminan con una línea en blanco.
     
 - Los namespaces tienen ámbito de bloque y reflejan la arquitectura, EternalDusk.<Layer>.<Area> (por ejemplo EternalDusk.Systems.UI.Dialogue). El primer segmento después de la raíz es siempre la capa.
     
 - Un tipo principal por archivo. Un pequeño tipo auxiliar estrechamente relacionado (un enum o struct de apoyo) puede compartir el archivo.
     
-- Cada archivo se abre con el comentario de encabezado estándar, insertado automáticamente por el generador de código del proyecto, y no se escribe a mano:
+- Cada archivo se abre con el comentario de encabezado estándar, insertado por las plantillas de script del proyecto (Assets > Create > Custom Script, con las plantillas en Assets/Editor/ScriptTemplates), y no se escribe a mano:
     
 
 |   |
 |---|
-|/*<br><br>**  LevelContext<br><br>**<br><br>**  Created by <Author> on <dd/mm/yyyy><br><br>**  Copyright © <year>, Barranco Games. All rights reserved.<br><br>*/|
+|/*<br><br>**  LevelContext<br><br>**<br><br>**  Created by <Author> on <dd/mm/yyyy><br><br>**  Copyright© <year>, Barranco Games. All rights reserved.<br><br>*/|
 
   
 
 ### Usings
 
-Las directivas using se agrupan en un orden fijo, separadas por líneas en blanco: primero los namespaces de System, luego Unity, luego de terceros (como Reflex), luego los propios namespaces de EternalDusk del proyecto ordenados por capa de Core hacia afuera.
+Las directivas using se agrupan en un orden fijo, separadas por líneas en blanco: primero los namespaces de System, luego Unity, luego de terceros (como Reflex), luego los propios namespaces de EternalDusk del proyecto ordenados por capa de Core hacia afuera. Un analizador marca cualquier using fuera de este orden.
 
 |   |
 |---|
-|using System;<br><br>using System.Collections.Generic;<br><br>using UnityEngine;<br><br>  <br><br>using Cysharp.Threading.Tasks<br><br>using Reflex.Attributes;<br><br>using EternalDusk.Core.Persistence;<br><br>using EternalDusk.Systems.UI;<br><br>using EternalDusk.Engine.World;|
+|using System;<br><br>using System.Collections.Generic;<br><br>using UnityEngine;<br><br>  <br><br>using Cysharp.Threading.Tasks;<br><br>using Reflex.Attributes;<br><br>using EternalDusk.Core.Persistence;<br><br>using EternalDusk.Systems.UI;<br><br>using EternalDusk.Engine.World;|
 
   
 
@@ -163,7 +163,7 @@ Las directivas using se agrupan en un orden fijo, separadas por líneas en blanc
 
 ### Variables y campos
 
-- Fields are explicitly private y readonly whenever they are not reassigned.
+- Los campos son explícitamente private, y readonly siempre que no se reasignen.
     
 - Usar var cuando el tipo es obvio por el lado derecho (constructores, casts, llamadas a factorías); usar el tipo explícito en caso contrario, especialmente para primitivos.
     
@@ -214,28 +214,39 @@ Las dependencias se resuelven a través de Reflex, y la UI sigue una separación
     
 - Los installers implementan IInstaller y registran los bindings de forma fluida, indicando Lifetime y Resolution (Lazy o Eager).
     
-- MonoBehaviours receive Unity references via [SerializeField] y servicios inyectados mediante [Inject]; los tipos que usan inyección por campo son [SourceGeneratorInjectable] y partial. Las clases simples usan inyección por constructor.
+- Los MonoBehaviours reciben las referencias de Unity mediante [SerializeField] y los servicios mediante [Inject]; los tipos que usan inyección por campo son [SourceGeneratorInjectable] y partial. Las clases simples usan inyección por constructor.
     
 
 ### Registro (logging)
 
 - Todo el registro pasa por la fachada estática Log en EternalDusk.Core.Logging, que reenvía a una implementación ILogger: EDLogger en tiempo de ejecución, NullLogger por defecto. Nunca llamar directamente a Debug.Log o Debug.LogFormat; un analizador lo marca y apunta al equivalente Log.
     
-- Los niveles son Verbose, Info, Warn, y Error, más Assert. Los mensajes por debajo del nivel actual se omiten.
+- Los niveles son Error, Warn, Info y Verbose (LogLevel), más None para silenciarlo todo. Se omiten los mensajes menos graves que el nivel activo.
     
-- Cuando un mensaje es costoso de construir (interpolación o concatenación de strings), usar la sobrecarga Func<string> para que solo se evalúe cuando el nivel está activo: Log.Warn(() => $"..."). Un analizador marca los mensajes costosos pasados a la sobrecarga de string simple. Los mensajes constantes o baratos pueden usar la sobrecarga de string directamente.
+- Cuando un mensaje es costoso de construir (interpolación o concatenación de strings), usar la sobrecarga Func<string> para que solo se evalúe cuando el nivel está activo: Log.Warn(() => $"..."). Un analizador marca los mensajes que puntúa como costosos pasados a la sobrecarga de string simple, y la prueba LazyLoggingTests detecta el resto. Los mensajes constantes o baratos pueden usar la sobrecarga de string directamente.
     
 
 ### Disciplina de asignación
 
-- Mantener las rutas críticas sin asignaciones: cachear delegados, reutilizar buffers, usar Array.Empty<T>() por defecto, y evitar LINQ y cierres por fotograma (véanse los objetivos técnicos en la sección 2.2).
+- Mantener las rutas críticas sin asignaciones: cachear delegados, reutilizar buffers, usar Array.Empty<T>() por defecto, y evitar LINQ y cierres por fotograma (véanse los objetivos técnicos en la sección 2.2). Un analizador marca las asignaciones en el heap, las llamadas LINQ y los delegados creados dentro de métodos por fotograma.
     
 
 ### Comentarios
 
-- Usar /// para resúmenes XML en tipos públicos y contratos no obvios.
+- Escribir los menos comentarios posibles. Usar /// solo para resúmenes de contratos públicos no obvios.
     
-- Añadir comentarios en línea cortos solo donde la intención no sea obvia a partir del código.
+- Los comentarios en línea quedan para el código realmente arcano (trucos de bits, algoritmos sutiles). Un comentario de más de una frase indica que el código debe reescribirse.
+    
+
+### Pruebas y determinismo
+
+- Las pruebas reflejan las capas: un ensamblado EditMode por capa (EternalDusk.Tests.EditMode.Core, …Gameplay, …Systems, …Engine) más EternalDusk.Tests.PlayMode. Las de EditMode usan el namespace EternalDusk.Tests.<Layer>.<Area>.
+    
+- Una clase de prueba por clase de producción; los métodos se nombran Method_Scenario_Outcome.
+    
+- Fakes en lugar de frameworks de mocking; los compartidos viven en Tests/EditMode/Common.
+    
+- La aleatoriedad se inyecta como System.Random; nunca se comprueba un resultado de aleatoriedad sin semilla.
     
 
 ## 2.5 Bibliotecas externas
@@ -245,13 +256,14 @@ Estas son las bibliotecas de terceros de las que depende el proyecto.
 |Biblioteca|Versión|Propósito|Licencia|
 |---|---|---|---|
 |Reflex|14.3.1|Contenedor de inyección de dependencias utilizado para resolver dependencias en todas las capas.|MIT|
-|UniTask|2.5.1|async/await eficiente en asignaciones para Unity; se usa en todas las capas para trabajo distribuido en fotogramas y trabajo asíncrono.|MIT|
+|UniTask|2.5.11|async/await eficiente en asignaciones para Unity; se usa en todas las capas para trabajo distribuido en fotogramas y trabajo asíncrono.|MIT|
 |Articy|Draft X|Autoría de narrativa y diálogos; las entidades se enlazan con objetos de Articy y poseen conversaciones.|Propietario|
-|FMOD|2.03.13|Middleware de audio para música adaptativa y efectos de sonido, integrado a través de la capa Engine.|Propietario|
+|FMOD|2.03.14|Middleware de audio para música adaptativa y efectos de sonido, integrado a través de la capa Engine.|Propietario|
+|Odin Inspector|4.0.2.3|Atributos de inspector (BoxGroup, etc.) y ventanas de editor para los componentes y assets de la capa Engine; las capas internas no lo usan.|Propietario|
 
   
 
-El proyecto también depende de paquetes oficiales de Unity distribuidos a través del Package Manager: el Input System (gestión de entrada) y Cinemachine (cámara), junto con el Job System, Burst y los compute shaders utilizados por la capa Engine. Estas son tecnologías propias de Unity más que dependencias de terceros.
+El proyecto también depende de paquetes oficiales de Unity distribuidos a través del Package Manager: el Universal Render Pipeline (URP 17.5), el Input System (gestión de entrada), Cinemachine 3 (cámara), AI Navigation (NavMesh), Addressables, Localization (tablas de inglés y español), Mathematics, Newtonsoft Json (serialización de partidas) y Test Framework con Code Coverage, junto con el Job System, Burst y los compute shaders utilizados por la capa Engine. La UI se construye con UI Toolkit. Estas son tecnologías propias de Unity más que dependencias de terceros.
 
 ## 2.6 Visión general de la organización del código
 
@@ -259,15 +271,17 @@ Esta sección describe cómo está estructurado el código: la arquitectura por 
 
 ### Arquitectura y capas
 
-El código está dividido en cuatro capas. Ordenadas de la más interna a la más externa son Core, Gameplay, Systems, y Engine. Las dependencias apuntan hacia adentro: una capa puede usar las capas interiores pero nunca las exteriores, y Core no depende de nada más que de sí misma. Solo Engine referencia Unity y plugins de terceros; las únicas excepciones son Reflex y UniTask, permitidos en cada capa. Las dependencias se conectan a través de Reflex.
+El código está dividido en cuatro capas. Ordenadas de la más interna a la más externa son Core, Gameplay, Systems, y Engine. Las dependencias apuntan hacia adentro: una capa puede usar las capas interiores pero nunca las exteriores, y Core no depende de nada más que de sí misma. Cada capa es un ensamblado (EternalDusk.Core, EternalDusk.Gameplay, EternalDusk.Systems, EternalDusk.Engine), y los tres internos se compilan con noEngineReferences, así que una referencia a Unity en ellos no compila. Solo Engine referencia Unity y plugins de terceros; las únicas excepciones son UniTask, permitido en todas las capas, y Reflex, permitido desde Gameplay hacia afuera. Las dependencias se conectan a través de Reflex.
 
 - Core: primitivas y contratos independientes del motor, incluyendo identificadores como EntityId y PrefabId, datos de tipo de valor y los buses unificados (por ejemplo StatType y ResourceType). C# puro, y el código más sensible al rendimiento.
     
-- Gameplay: reglas del juego y definiciones construidas sobre Core, incluyendo las categorías de estadísticas concretas (atributos, combate, derivadas, aptitudes, resistencias), tipos de daño y tipos de recursos como Health, ActionPoints, y Sanity.
+- Gameplay: reglas del juego y definiciones construidas sobre Core, incluyendo las categorías de estadísticas concretas (atributos, combate, derivadas, aptitudes, resistencias) con el mediador de estadísticas (StatsMediator) y sus modificadores (StatsModifier), tipos de daño, efectos de estado y tipos de recursos como Health, ActionPoints, Ammunition y Sanity.
     
-- Systems: servicios que coordinan el juego, incluyendo el mediador de estadísticas y el pipeline de modificadores, el caché y la simulación del estado de los recursos, el pipeline de áreas y la orquestación de guardar/restaurar.
+- Systems: servicios que coordinan el juego, incluyendo las hojas de estadísticas por actor (ActorStats, AgentStats), el caché del estado de los recursos (ActorResources), las acciones (MovementService, SkillService, DialogueService), los turnos, la IA enemiga y su simulación, el pipeline de áreas, los presentadores de UI y la orquestación de guardar/restaurar (GameStateService).
     
 - Engine: la única capa consciente de Unity y los plugins, con entidades MonoBehaviour, shaders de renderizado y cómputo, entrada, integración de Articy y FMOD, y los adaptadores que vinculan los sistemas internos al entorno de ejecución.
+    
+- Fuera de las capas: los compute shaders, el HLSL y los render features (SelectionOutlineFeature) viven en Assets/Scripts/Shaders, dentro de Assembly-CSharp y sin asmdef; las herramientas de editor, en EternalDusk.Editor; y las pruebas, en ensamblados que reflejan las capas (véase 2.4).
     
 
 Un pilar central de esta estructura es un juego de alto rendimiento: con las capas internas independientes del motor y sin alocaciones, la lógica más frecuentemente ejecutada se mantiene rápida, mientras que la capa Engine absorbe todo lo específico de Unity.
@@ -279,7 +293,7 @@ Todo lo que el jugador puede interactuar es una Entity. Las entidades viven en l
 |Tipo|Representa|Añade|
 |---|---|---|
 |Entity<TState>|Cualquier cosa con la que se puede interactuar en el mundo.|EntityId y PrefabId estables, posición en el mundo con un evento de cambio basado en push, guardado/restauración versionado, selección/resaltado y enlace con Articy.|
-|Actor<TState, …>|Una entidad con salud y comportamiento más rico.|Mediador de Resources, Stats, Resistances, Health y un controlador de efectos de estado; hooks de inicio/fin de turno.|
+|Actor<TState, TStats, TDefinition>|Una entidad con salud y comportamiento más rico.|Resources, Stats (con sus Resistances), Health y un controlador de efectos de estado; hook de inicio de turno (BeginTurn) y ocultación cuando el grupo no lo ve (IConcealable).|
 |Agent<TState>|Personas y monstruos.|Habilidades, equipamiento y los recursos de agente puntos de acción, munición y cordura; refresca los PA y avanza los cooldowns cada turno.|
 
   
@@ -288,14 +302,16 @@ Cada Entity<TState> lleva un EntityId y un PrefabId estable, expone su Position 
 
 - Core y Persistencia: cada entidad captura y restaura un estado tipado a través de un SaveEnvelope. Version y Migrate permiten que las partidas antiguas se actualicen cuando cambia el formato del archivo de guardado.
     
-- Visual e Interacción: la selección y el hover impulsan un estado de resaltado que cambia la capa de renderizado del objeto (default, candidate, outline, selected) para el resaltado y la retroalimentación de objetivo.
+- Visual e Interacción: el hover, el foco, la fijación de objetivo, la revelación y el parpadeo encienden un contorno, dibujado por SelectionOutlineFeature, marcando bits de la máscara de capas de renderizado de los renderers de la entidad (OutlineLayers); su tono lo resuelve OutlineTint (Neutral, Hostile, Ally, Target, Blink), y la fijación de objetivo (rojo) gana sobre los demás.
     
 - Narrativa: las entidades pueden enlazarse a un objeto de Articy y poseer una conversación, conectándose al sistema de diálogo y narrativa.
     
 
-Un Actor es una entidad con salud y comportamiento más complejo: posee Recursos, Estadísticas, Vida, y un controlador de efectos de estado, se inicializa desde una IActorDefinition, y avanza los efectos de estado al inicio y al final del turno.
+Un Actor es una entidad con salud y comportamiento más complejo: posee Recursos, Estadísticas, Vida, y un controlador de efectos de estado, se inicializa desde una IActorDefinition, y avanza los efectos de estado al inicio de su turno.
 
 Un Agent, es el tipo utilizado para personas y monstruos, añade habilidades, equipamiento y los recursos de agente puntos de acción, munición y cordura; construye su AgentStats (atributos, resistencias, aptitudes, derivadas) desde una definición, y refresca los puntos de acción y los cooldowns de habilidades al inicio de cada turno.
+
+Las clases concretas son PlayerAgent y Enemy (Agent<AgentData>), Item y AmmoPack (Entity<EntityData>) y Weapon (Entity<WeaponData>), además de la base ObstacleActor para obstáculos con salud. Las capas internas no ven estas clases sino sus contratos: IEntity, IEntitySource y EntityId en Core.World, PrefabId en Core.Persistence, IActor en Gameplay.World e IAgent en Systems.World. Las instancias se obtienen con las extensiones de IEntitySource (OfType<T>, TryGetFirst<T>, Single<T>), no con ids fijos en el código.
 
 ### Especificaciones de los sistemas
 
@@ -313,6 +329,15 @@ La especificación técnica detallada de cada sistema se mantiene en el capítul
     
 - [[Quest System]]: seguimiento y progresión de misiones principales y secundarias.
     
+- [[Technical Sound Document]]: especificación técnica y artística del audio con FMOD.
+    
+- Sin página todavía, aunque ya existen en el código:
+    - Turnos: TurnService, TurnOrder y los gobernadores de exploración y combate (Systems/Turns).
+    - IA enemiga: planificación del turno en Systems/AI (véase la sección 3.4).
+    - Efectos de estado: StatusEffect y sus comportamientos (Gameplay/StatusEffects), aplicados por ActorStatusEffects y StatusEffectService (Systems/StatusEffects).
+    - Equipamiento: AgentEquipment (Systems/Equipment).
+    - UI: presentadores MVP sobre UI Toolkit (Systems/UI, Engine/UI).
+    
 
 TODO: Un diagrama de arquitectura debe acompañar esta sección.
 
@@ -322,45 +347,54 @@ TODO: Un diagrama de arquitectura debe acompañar esta sección.
 
 ## 2.7 Política de ramas
 
-El modelo de ramas usa ramas de larga duración master y develop con ramas de corta duración para funcionalidades y correcciones. La estructura de ramas y la convención de nomenclatura están definidas ([Representación Visual](https://drive.google.com/file/d/1h5U6k1IXgpsnfa_IcXHHb-gEemEMg2k8/view)); las reglas que las rodean (cuándo ramificar y fusionar, los requisitos de revisión y el proceso de lanzamiento) están aún por acordar por el equipo.
+El modelo de ramas usa ramas de larga duración master y develop con ramas de corta duración para funcionalidades y correcciones ([Representación Visual](https://drive.google.com/file/d/1h5U6k1IXgpsnfa_IcXHHb-gEemEMg2k8/view)). Ninguna de las dos ramas largas acepta push directo: todo el trabajo entra por pull request.
 
 ### Ramas
 
-- master: la rama estable.
+- master: la rama estable; cada fusión en master es una versión publicada.
     
-- develop: la rama de integración donde se reúne el trabajo en curso.
+- develop: la rama base y de integración; las pull requests apuntan aquí.
     
-- feature/… y bugfix/…: ramas de corta duración para una sola funcionalidad o corrección, cada una vinculada a un issue de GitHub.
+- <tipo>/…: ramas de corta duración para un solo cambio.
+    
+- release/x.y.z: lleva develop a master en cada versión (véase 2.10).
     
 
 ### Convención de nomenclatura
 
-Las ramas de feature y bugfix siguen este patrón:
+Las ramas de corta duración siguen este patrón:
 
 |   |
 |---|
-|<type>/ED-<issue>_<branch-name>|
+|<type>/<branch-name>|
 
   
 
-- <type>: ya sea feature o bugfix.
+- <type>: el tipo de cambio: feature (o feat), fix, perf, refactor, cleanup, chore, ci, test o docs; release para una versión.
     
-- ED-<issue>: el prefijo del proyecto ED seguido del número de issue de GitHub que aborda la rama.
+- Cuando el cambio sale de una fila del tablero de revisión, el nombre empieza por el id de esa fila (fix/sav-1-autosave-and-dice); las ramas no se vinculan a issues de GitHub.
     
-- <branch-name>: un nombre corto y descriptivo para el trabajo.
+- <branch-name>: un nombre corto, en inglés y kebab-case, que nombra el cambio.
     
 
 Por ejemplo:
 
 |   |
 |---|
-|feature/ED-142_area-fog-of-war<br><br>bugfix/ED-207_save-migration-crash|
+|feature/prison-cells-start-level<br><br>fix/fog-range-storage-load-race<br><br>release/0.1.5|
 
   
 
-### Por definir
+### Fusiones y comprobaciones
 
-- Quién realiza las fusiones y qué comprobaciones (compilación, pruebas, analizadores) deben pasar primero.
+- Las pull requests a develop se fusionan con squash; la de una versión (release/x.y.z a master) y la que devuelve master a develop después se fusionan con un commit de fusión, para que las dos historias no se separen.
+    
+- Las comprobaciones corren en GitHub Actions sobre un runner autoalojado: Tests (EditMode y PlayMode, con cobertura) en cada pull request no borrador a develop o master, en cada push a esas ramas y cada día sobre develop; Player build en las pull requests a master y en las de develop que cambian lo que compila el reproductor (véase 2.9); Code location y Agent tooling en cada cambio. El plan del repositorio no admite protección de ramas, así que las comprobaciones son orientativas: Develop gate marca como pendientes las pull requests a develop mientras corre la verificación de una fusión en develop.
+    
+
+### Git LFS
+
+Desde el 16/10/2026 los binarios (png, jpg, jpeg, psd, tga, exr, hdr, fbx, ttf, otf, wav, mp3, ogg, bank, bytes) se guardan en Git LFS. Para moverlos se reescribió toda la historia, así que los hashes de commit anteriores a esa fecha no existen en un clon nuevo. El .articyu3d sigue como binario normal de git. Code location rechaza un binario subido sin pasar por LFS (git lfs fsck --pointers). Las escenas, prefabs y assets se fusionan con el driver unityyamlmerge (.gitattributes, Tools/unityyamlmerge.sh).
     
 
 ## 2.8 Presupuestos de rendimiento
@@ -394,26 +428,40 @@ Coste estimado de CPU en el hilo principal de la actualización del Sistema de �
 
 En memoria, el Sistema de Áreas presupuesta aproximadamente ~79 MB, unos ~17 MB en la GPU y ~62 MB en la CPU, donde los constructores de mallas de niebla y visión dominan con ~55 MB. Un presupuesto de memoria para todo el proyecto está aún por definir.
 
+### Mediciones (0.1.5)
+
+La auditoría de rendimiento del 06/10/2026, repetida el 17/10/2026 con el mismo escenario para 0.1.1, 0.1.2 y 0.1.5, tomó las primeras capturas del perfilador. Son capturas en el editor sobre DemoArena a 1080p: arranque, diálogo, exploración, saltos de cámara, un combate de tres rondas, guardar y cargar. No sustituyen a las mediciones en el hardware objetivo, pero ya acotan los presupuestos de arriba.
+
+|Métrica|0.1.5|Notas|
+|---|---|---|
+|CPU del hilo principal, media en juego|~2.1 ms|Frente a los 16.7 ms del presupuesto de fotograma.|
+|Fotogramas de juego por encima de 16.7 ms|0|En todas las versiones medidas.|
+|Peor porción de planificación de la IA|~0.9 ms|La búsqueda cede el fotograma al gastar TurnPlanner.SliceBudget (1 ms).|
+
 ## 2.9 Método de entrega de la build
 
-El proceso de compilación y entrega aún no está definido. Las siguientes decisiones permanecen abiertas:
+Las builds se producen de forma automatizada en GitHub Actions, sobre un runner autoalojado en el PC de un miembro del equipo, que solo atiende trabajos mientras su sesión (run.cmd) está abierta. El workflow Player build (.github/workflows/player-build.yml) compila el reproductor de Windows x64 en release con IL2CPP (SmokeBuild.BuildAndExit) y juega en él una partida nueva (-smoke) como prueba de humo. Se dispara en cada fusión en master (una versión), en cada pull request a master, en las pull requests a develop que cambian lo que compila el reproductor, cada lunes sobre develop y a mano. Solo se suben los logs (7 días en pull requests, 30 en el resto); el ejecutable no se publica. Siguen abiertas estas decisiones:
 
-- Cómo se producen las builds (manualmente o de forma automatizada mediante CI) y con qué disparadores.
+- Las builds de macOS y Linux: hoy solo se compila Windows.
     
 - Dónde se entregan y almacenan las builds y en qué formato.
     
-- Quién es responsable de producir y distribuir las builds y con qué frecuencia.
+- Quién distribuye las builds a jugadores o testers y con qué frecuencia.
     
 
 ## 2.10 Lista de versiones TODO:
 
-La hoja de ruta de versiones aún no está definida. Una vez que el equipo acuerde los hitos, cada versión planificada y sus funcionalidades objetivo se listan aquí. Las filas a continuación son un andamiaje de marcadores.
+La hoja de ruta más allá de 0.2.0 aún no está definida; cuando el equipo acuerde los hitos, cada versión planificada y sus funcionalidades objetivo se listan aquí. Una versión se publica fusionando una rama release/x.y.z en master con un commit de fusión que sube bundleVersion (ProjectSettings), y se etiqueta Release_x.y.z; después master vuelve a develop, también con un commit de fusión.
 
 |Versión|Funcionalidades planificadas|Fecha objetivo|Estado|
 |---|---|---|---|
-|v0.1|Por definir|Por definir|Borrador|
-|v0.2|Por definir|Por definir|Planificada|
-|v0.3|Por definir|Por definir|Planificada|
+|v0.1.0|Primer prototipo jugable en DemoArena|21/09/2026|Publicada|
+|v0.1.1|Iteración del prototipo de DemoArena|28/09/2026|Publicada|
+|v0.1.2|Iteración del prototipo de DemoArena|08/10/2026|Publicada|
+|v0.1.3|Iteración del prototipo de DemoArena|10/10/2026|Publicada|
+|v0.1.4|Iteración del prototipo de DemoArena|10/10/2026|Publicada|
+|v0.1.5|Iteración del prototipo de DemoArena: exploración, diálogo con Articy, combate por turnos contra la IA, guardar y cargar|19/10/2026|Publicada (versión actual)|
+|v0.2.0|Nivel tutorial de la prisión (Prison_Cells_Start), independiente de DemoArena, que queda solo para depuración|Por definir|En desarrollo|
 |v1.0|Por definir|Por definir|Planificada|
 
   
@@ -434,11 +482,13 @@ Eternal Dusk tiene como objetivo las plataformas de escritorio: Windows, macOS y
 
 Estos valores son una hipótesis, no un objetivo medido. El valor de almacenamiento es una estimación aproximada que depende del alcance final de los assets. Todos los valores deben confirmarse mediante perfilado en el hardware objetivo (véanse los presupuestos de rendimiento en la sección 2.8).
 
+Hoy solo se compila y prueba en CI el reproductor de Windows x64 (IL2CPP); macOS y Linux no tienen todavía build ni prueba automatizada.
+
 # 3. Secciones Adicionales
 
 ## 3.1 Elección del motor de juego
 
-El juego está construido en Unity. El equipo ha trabajado con Unity durante los últimos diez años, por lo que el motor es bien conocido, y su apertura permite al equipo construir los sistemas que el juego necesita en lugar de trabajar alrededor de un framework opinado. Esa flexibilidad es lo que hace posible la arquitectura personalizada y orientada al rendimiento de la sección 2: el Sistema de Áreas impulsado por GPU, la configuración de inyección de dependencias y la organización del código por capas.
+El juego está construido en Unity 6 (editor 6000.5.5f1) con el Universal Render Pipeline. El equipo ha trabajado con Unity durante los últimos diez años, por lo que el motor es bien conocido, y su apertura permite al equipo construir los sistemas que el juego necesita en lugar de trabajar alrededor de un framework opinado. Esa flexibilidad es lo que hace posible la arquitectura personalizada y orientada al rendimiento de la sección 2: el Sistema de Áreas impulsado por GPU, la configuración de inyección de dependencias y la organización del código por capas.
 
 Unity también proporciona la tecnología de soporte de la que depende el proyecto: scripting en C#, un amplio ecosistema de paquetes y características de bajo nivel como el C# Job System, Burst y los compute shaders.
 
@@ -483,7 +533,7 @@ El audio de Eternal Dusk se implementa mediante un pipeline en tres etapas 
     
 2. Gestión del Middleware ([FMOD Studio](https://www.fmod.com/studio/)): Funciona como un motor de ejecución asíncrono y asilado que procesa la mezcla, la espacialización 3D, y las estructuras musicales interactivas en hilos dedicados de bajo nivel, liberando al Main Thread de Unity y eliminando GC Allocs en los hot paths del bucle de fotograma. Adicionalmente, empaqueta los assets en bancos segmentados (.bank) aplicando perfiles de compresión dinámicos (ADPCM para SFX iterativos de baja latencia; Vorbis para streaming de buffers largos), optimizando la huella de memoria en tiempo de ejecución.
     
-3. Integración en Unity ([Unity Package](https://assetstore.unity.com/packages/tools/fmod-for-unity-2-03-upm-1082237)): Las capas internas interactúan controlando el comportamiento dinámico del audio a través de la inyección de parámetros basados en tipos de valor puro extraídos de los snapshots del juego. La carga de los bancos de sonido se orquesta de forma asíncrona mediante el sistema de Addressables en consonancia con el streaming de chunks del mundo.
+3. Integración en Unity ([Unity Package](https://assetstore.unity.com/packages/tools/fmod-for-unity-2-03-upm-1082237)): Las capas internas interactúan controlando el comportamiento dinámico del audio a través de la inyección de parámetros basados en tipos de valor puro extraídos de los snapshots del juego. Los bancos de sonido se cargan de forma asíncrona al arrancar, uno por fotograma, mediante AudioBankLoader sobre el RuntimeManager de FMOD (los ajustes de FMOD no cargan ningún banco por sí mismos); no pasan por Addressables ni siguen el streaming de chunks del mundo.
     
 
 ## 3.3 Objetos 3D, terreno y gestión de escenas
@@ -492,15 +542,17 @@ La gestión de assets y escenas utilizará el sistema Addressables de Unity. Add
 
 La agrupación de assets, la estrategia de carga y cómo Addressables interactúa con la carga de niveles y el streaming del terreno del Sistema de Áreas están aún por detallar.
 
+Hoy Addressables (2.9.1) solo sirve las tablas de Localization: las escenas se cargan por nombre con SceneManager desde la lista de escenas de la build, y los prefabs se resuelven por PrefabId a través de PrefabRegistryDefinition.
+
 ## 3.4 Inteligencia Artificial
 
-La IA más exigente se ejecuta durante el combate, que es por turnos; fuera del combate, el comportamiento del agente es comparativamente ligero. La idea guía es ocultar la computación de IA detrás de los momentos que el jugador ya está observando. Durante el turno del jugador, y mientras se desarrollan las secuencias de acción y animación, la IA almacena en caché el estado y computa lo que necesita para su propio turno, de modo que cuando el control le pasa el trabajo está en gran medida hecho y su turno se resuelve sin una pausa visible.
+La IA más exigente se ejecuta durante el combate, que es por turnos; fuera del combate, el comportamiento del agente es comparativamente ligero. Vive sin dependencias del motor en Systems/AI, detrás de AIService (ITurnPlanSource), y AITurnController ejecuta cada paso del plan con los mismos MovementService y SkillService que usa el jugador. En lugar de calcular durante el turno del jugador, el coste se reparte. Al empezar un encuentro, PrepareEncounter llena un pool de estados simulados (128, a 32 por fotograma) y el primer turno de combate espera a que esté listo. En el turno de la IA, la búsqueda devuelve el fotograma cada vez que una porción gasta TurnPlanner.SliceBudget (1 ms), de modo que un combate grande cuesta más fotogramas, no fotogramas más largos.
 
-El planificador en sí mismo será muy probablemente una forma de GOAP (Planificación de Acciones Orientada a Objetivos): a cada agente se le dan objetivos y un conjunto de acciones disponibles, y un planificador busca una secuencia de acciones que satisfaga un objetivo contra el estado del mundo actual. Esto es un enfoque candidato más que una decisión finalizada.
+El planificador no es GOAP sino una búsqueda en haz best-first sobre estados del mundo simulados (TurnPlanner). Expande el nodo más prometedor, pide acciones candidatas a los proveedores de movimiento y de habilidades, y conserva las mejores ramas (MaxBranches = 6) hasta una profundidad de 8 y 512 expansiones como máximo. Devuelve como plan del turno el camino de mayor puntuación, o ninguno si nada mejora quedarse quieto. Cada paso se puntúa con términos de daño infligido, salud propia, estados aplicados, penalización por muerte, movimiento, consumibles y logro del objetivo. El daño simulado es un valor esperado y nunca se tira, así que un plan es determinista.
 
-GOAP encaja bien con la arquitectura existente. La capa de simulación sin asignaciones y de tipo de valor en el sistema de Recursos (sección 2.6) permite al planificador evaluar el resultado de acciones hipotéticas sin asignar ni mutar el estado del juego en vivo, apoyando el objetivo de simulación segura para IA de la sección 2.2.
+El planificador encaja con la arquitectura existente. Cada rama trabaja sobre su propia copia de un estado del pool (SimulatedWorldState, SimulatedAgentState, SimulationStatePool), con los recursos guardados como snapshots de valor ResourceState del sistema de Recursos (sección 2.6). Así evalúa acciones hipotéticas sin mutar el estado del juego en vivo y solo asigna cuando el pool se queda corto, como pide el objetivo de simulación segura para IA de la sección 2.2.
 
-Los conjuntos de objetivos y acciones, el modelo de costes del planificador y exactamente qué trabajo se almacena en caché durante el turno del jugador están aún por diseñar.
+Los objetivos se editan por agente en AgentDefinitionSO como AIGoalData (prioridad y un multiplicador por término de puntuación). GoalSelector juega el de mayor prioridad disponible; sin objetivos editados, el agente juega KillTarget, que hoy es el único AIGoalKind. Es hostil cualquier IAgent que no esté en el grupo (PartyService), y los enemigos de un encuentro comparten lo que ven del grupo hasta que acaba. Quedan por diseñar más tipos de objetivo, las facciones, el disparador de aggro fuera de los encuentros guionizados y que los planes tengan en cuenta la probabilidad de impacto.
 
 # 4. Referencias
 

@@ -4,8 +4,8 @@ The stats system is built around a clear separation between primitive calculatio
 
 The system operates at two levels:
 
-- **Base stats** — fixed values authored in `AttributeData` and `ResistanceData` ScriptableObjects
-- **Modified stats** — base values passed through `StatsMediator`, which applies all active `StatsModifier` instances via `StatQuery`
+- **Base stats** — authored values (`AttributeData`, `ResistanceData`, `DerivedStatsData`, edited through the `AttributeDataSO`, `ResistanceDataSO` and `DerivedStatsDataSO` ScriptableObjects). Derived stats and aptitudes start from a formula over the attributes (plus an authored base for derived stats), not from a fixed value
+- **Modified stats** — every base value passed through `StatsMediator.PerformQuery`, which builds a `StatQuery` and lets all active `StatsModifier` instances adjust it
 
 ---
 
@@ -13,48 +13,51 @@ The system operates at two levels:
 
 ### Composable stat ownership
 
-Stats are not monolithic. `ActorStats` covers the minimum any damageable actor needs. `AgentStats` extends it for full agents. Engine decides which to instantiate based on what data is assigned:
+Stats are not monolithic. `ActorStats` covers the minimum any damageable actor needs: resistances plus `Precision` and `Evasion`. `AgentStats` extends it for full agents. The Engine entity class decides which to instantiate: `ObstacleActor` uses `ActorStats`, `Agent` builds `AgentStats` in `CreateStats`:
 
 ```csharp
-// Hazard or destructible — resistances only
+// Hazard or destructible — resistances, precision and evasion only
 var actor = new ActorStats(mediator, resistances);
 
 // Full agent — everything
-var agent = new AgentStats(mediator, resistances, attributes, aptitudes, derived, sanity);
+var attributes = new AttributeSet(definition.Attributes, mediator);
+var resistances = new ResistanceSet(definition.Resistances, mediator);
+var aptitudes = new AptitudeSheet(attributes, mediator);
+var derived = new DerivedStats(attributes, definition.Derived, mediator, dice);
+var agent = new AgentStats(mediator, resistances, attributes, aptitudes, derived);
 ```
 
 No optional nullables, no feature flags — the type itself expresses the actor's capability.
 
 ### Typed stat enums with a unified bus
 
-Each stat category has its own zero-based enum in Gameplay. `StatType` in Core is the unified bus type used by `StatQuery` and `StatsModifier`. The mapping is a fixed numeric offset per category:
+Each stat category has its own enum in Gameplay (not all are zero-based: `Resistance` starts at 1, `CombatStat.Precision` is 3). `StatType` in Core is the unified bus type used by `StatQuery` and `StatsModifier`. The mapping is a fixed numeric offset per category:
 
 | Category    | Offset | Example                              |
 |-------------|--------|--------------------------------------|
 | Attribute   | 0      | `Attribute.Strength = 0`             |
-| CombatStat  | 10     | `CombatStat.Initiative = 2 → 12`     |
-| DerivedStat | 20     | `DerivedStat.MaxHP = 0 → 20`         |
+| CombatStat  | 10     | `CombatStat.Precision = 3 → 13`      |
+| DerivedStat | 20     | `DerivedStat.MaxHP = 1 → 21`         |
 | Aptitude    | 30     | `Aptitude.Discover = 0 → 30`         |
-| Resistance  | 100    | `Resistance.Standard = 0 → 100`      |
+| Resistance  | 100    | `Resistance.Fire = 1 → 101`          |
 
 Each enum exposes `AsStatType()` which applies the offset via a single cast. This design is ready for source generation — when introduced, the generator replaces `StatType.cs` and the offset constants with no other changes required.
 
 ### StatQuery resolution
 
-`StatQuery` is a mutable struct passed by `ref` through every modifier. Each modifier deposits into one of three accumulators. Resolution order is a single explicit formula:
+`StatQuery` is a mutable struct passed by `ref` through every modifier. Each modifier deposits into one of three accumulators (`FlatBonus` sums, `PercentBonus` sums, `Multiplier` multiplies). Resolution order is a single explicit formula, rounded once at the end (half away from zero):
 
 ```
-Base + FlatBonus → apply PercentBonus → apply Multiplier
+(Base + FlatBonus) × (100 + PercentBonus) / 100 × Multiplier
 ```
 
 This means resolution order is never an emergent property of handler registration — it is always predictable regardless of the order modifiers were added.
 
 ```csharp
-public int Resolve()
+public readonly int Resolve()
 {
-    int afterFlat = Base + FlatBonus;
-    int afterPercent = (int)Math.Round(afterFlat * (1f + PercentBonus / 100f));
-    return (int)Math.Round(afterPercent * Multiplier);
+    var scaled = (Base + FlatBonus) * (100.0 + PercentBonus) * Multiplier / 100.0;
+    return (int)System.Math.Round(scaled, System.MidpointRounding.AwayFromZero);
 }
 ```
 
@@ -69,35 +72,47 @@ int damage = stats.Resistances.ApplyTo(incomingDamage, DamageType.Explosive);
 
 Adding a new composite damage type requires no changes to `ResistanceSet` — the flag decomposition handles it automatically.
 
+`ApplyTo` reduces the damage by the averaged percentage, rounds the reduction, and never returns less than 1 for a positive hit. `ApplyToExpected` is the unrounded float version the AI simulation uses.
+
+### Derived stats and aptitudes are attribute-driven
+
+`DerivedStats` computes each derived value as an authored base (`DerivedStatsData`, default 10 HP / 4 AP / 2 m / sight 10) plus an attribute contribution, then sends the sum through the mediator so `StatsModifier`s stack on top:
+
+| Stat       | Formula                                                                   |
+|------------|---------------------------------------------------------------------------|
+| MaxHP      | base + Constitution / 8                                                   |
+| MaxAP      | base + 0-4 from Power + Cognition (65 → 1, 85 → 2, 125 → 3, 165 → 4)      |
+| MaxSanity  | base + Power                                                              |
+| Movement   | base + 1-3 from Dexterity and Strength against Constitution               |
+| Evasion    | `HitChance.BaseEvasion` (5) + base + Dexterity / 10 rounded up            |
+| SightRange | base                                                                      |
+
+`Precision` (`HitChance.BasePrecision` = 95) and `Initiative` (Dexterity + d100) are `CombatStat`s queried the same way. Aptitudes are pure attribute formulas in `AptitudeFormulas` (e.g. `Discover = 25 + Cognition / 2`), also queried through the mediator. `ActorStats` raises `OnStatChanged` whenever a modifier is added or removed, and `ActorResources.TrackStats` listens to it.
+
 ### Modifier lifetime separation
 
-`StatsModifier` knows nothing about turns or expiry — it only knows how to modify a query. Duration is external state managed by `ModifierSystem` through `ActiveModifier`:
+`StatsModifier` knows nothing about turns or expiry — it only knows how to modify a query. Whoever owns the effect adds and removes it through `ActorStats.AddModifier` / `RemoveModifier`; there is no `ModifierSystem` or `ActiveModifier`. Duration lives in the owner:
 
 ```csharp
-// Permanent modifier
-modifierSystem.Add(modifier);
-
-// Lasts 3 turns
-modifierSystem.Add(modifier, turns: 3);
-
-// Tick at end of turn — expired modifiers are removed automatically
-modifierSystem.Tick();
+// Status effect: StatModifierBehaviour holds the modifier while the status lasts
+public override void OnApply(IActor target) => target.Stats.AddModifier(_modifier);
+public override void OnRemove(IActor target) => target.Stats.RemoveModifier(_modifier);
 ```
+
+- **Status effects** (`StatModifierBehaviour`, `Dying`, `Overloaded`): the status carries a `StatusDuration`; `ActorStatusEffects` advances it each turn and calls `OnRemove` once it expires.
+- **Equipment**: `AgentEquipment` adds an item's `Modifiers` on equip and removes them on unequip.
 
 This means `StatsModifier` can be reused across different duration strategies without modification.
 
 ### Sanity as a resource-driven stat
 
-`Sanity` is a `BoundedResource` owned by the resource system, not a fixed base value. `AgentStats` holds a direct reference and exposes `Current` as a read-only stat:
+`Sanity` is a `BoundedResource` owned by the resource system, not a stat. `AgentStats` does not reference it; the maximum is the derived stat `MaxSanity` (authored base + Power, passed through the mediator), so modifiers to `MaxSanity` move the cap.
+
+The max is wired when `Agent` registers its resources:
 
 ```csharp
-public int Sanity => _sanity.Current;
-```
-
-The `Sanity` resource's max is wired at construction in `EntityBehaviour`:
-
-```csharp
-sanity = Sanity.Create(() => attributes.Constitution / 4);
+Sanity = Sanity.Create(() => Stats.Derived.MaxSanity);
+resources.Register(Sanity);
 ```
 
 No coupling between the stat system and the resource system beyond this wiring point in Engine.
@@ -107,15 +122,16 @@ No coupling between the stat system and the resource system beyond this wiring p
 ## Adding a New Aptitude
 
 1. Add a value to `Aptitude` in `Gameplay/Stats/Aptitude.cs`
-2. Add the formula to `AptitudeFormulas` in `Systems/Stats/AptitudeFormulas.cs`
-3. Add the property and `Get()` case to `AptitudeSheet` in `Systems/Stats/AptitudeSheet.cs`
+2. Add the matching entry (offset 30 + value) to `StatType` in `Core/Stats/StatType.cs`
+3. Add the formula to `AptitudeFormulas` in `Gameplay/Stats/AptitudeFormulas.cs`
+4. Add the property and `Get()` case to `AptitudeSheet` in `Gameplay/Stats/AptitudeSheet.cs`
 
-Nothing else in the system needs to change.
+`AgentStats.TryGet` parses aptitudes by enum name, so lookups by name pick it up automatically.
 
 ---
 
 ## Adding a New Damage Type
 
-1. Add a flag value to `DamageType` in `Gameplay/DamageType.cs`
-2. If it is a primitive type, add a corresponding value to `Resistance` and a `HasFlag` check in `ResistanceSet.GetComponents()`
-3. If it is composite, define it as a combination of existing flags — `GetComponents` handles it automatically
+1. Add a flag value to `DamageType` in `Gameplay/Combat/DamageType.cs`
+2. If it is a primitive type, add a corresponding value to `Resistance` and `StatType` (offset 100), a field on `ResistanceData` and `ResistanceDataSO`, a property and `Get()` case on `ResistanceSet`, and a `(damageType & DamageType.X) != 0` line in `ResistanceSet.TotalAgainst()`
+3. If it is composite, define it as a combination of existing flags — `TotalAgainst` handles it automatically

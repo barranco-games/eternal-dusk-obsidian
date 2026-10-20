@@ -58,18 +58,18 @@ The registry holds **at most one `Entry` per `EntityId`**. Starting a new activi
 
 ### Terminal Dispositions
 
-Every activity ends in exactly one disposition. Only **non-cancelled** dispositions record to the ledger.
+Every activity ends in exactly one disposition. Only **non-cancelled** dispositions record to the ledger, with one exception: a cancelled walk that covered ground records where it stopped ([[Action System#6. MovementService|§6]]).
 
 |Disposition|Records?|Meaning|
 |---|---|---|
 |Completed|yes|reached natural end (path done, skill resolved, dialogue end-branch)|
 |HaltedByBudget|yes (movement)|ran out of movement budget mid-path|
-|Cancelled|**no**|superseded, externally cancelled, interrupted, or torn down|
+|Cancelled|**no** (movement: yes, if it walked any distance)|superseded, externally cancelled, interrupted, or torn down|
 |Refused / GateRejected|**no**|never started — gates or registry refused it|
 
 ### ActivitySource
 
-`ActivitySource { PlayerInputExploration, PlayerInputCombat, Ai, Cinematic }`. This single enum answers _who drives the activity_ and, by derivation, _whether it can be interrupted_ ([[Action System#5. Interruptibility & Precedence|§5]]). Player input is interruptible; `Ai` and `Cinematic` are not. Dialogue is the one case where driver and interruptibility diverge — it is player-driven yet should not be movement-interruptible — so its interruptibility is set deliberately at registration rather than read off the driver.
+`ActivitySource { PlayerInputExploration, PlayerInputCombat, Ai, Cinematic }`. This single enum answers _who drives the activity_ and, by derivation, _whether it can be interrupted_ ([[Action System#5. Interruptibility & Precedence|§5]]). Player input is interruptible; `Ai` and `Cinematic` are not. Two registrations set the source deliberately instead of reading it off the driver. A conversation's owner NPC registers as `Ai`, so it cannot be pulled out of the conversation ([[Action System#8. DialogueService|§8]]). A player's skill re-registers as `Cinematic` once released, so nothing cuts it short ([[Action System#7. SkillService|§7]]).
 
 ---
 
@@ -81,7 +81,7 @@ The three rules the system enforces:
     
 2. **An activity has duration and may be interruptible.** Interruptibility is derived from `ActivitySource`. `Movement` covers path-following; instantaneous displacement such as knockback or scripted shoves is handled as a skill effect on the target, not as a movement activity.
     
-3. **An activity records its outcome on reaching a non-cancelled terminal state.** Cancellation records nothing — movement skips `Cancelled` and cancel-and-replan, and a cancelled skill never reaches its record ([[Action System#7. SkillService|§7]], [[Action System#12. ActionLedger|§12]]).
+3. **An activity records its outcome on reaching a non-cancelled terminal state.** Cancellation records nothing: a cancelled skill aim or conversation never reaches its record ([[Action System#7. SkillService|§7]], [[Action System#12. ActionLedger|§12]]). Movement is the one exception. A walk cancelled (or replanned) after covering ground records the distance walked and where it stopped ([[Action System#6. MovementService|§6]]).
     
 
 ---
@@ -151,8 +151,8 @@ Precedence is derived entirely from the held activity's `ActivitySource` plus _h
 |Incoming|Mechanism|Outcome when slot is held|
 |---|---|---|
 |Movement|gate (`TryGetActivity` before `Begin`)|own movement → cancel-and-replan; any other kind → **GateRejected**|
-|Skill|`TryInterrupt(caster)`|interruptible holder → pre-empt; non-interruptible holder → **"busy"** failure|
-|Dialogue|`TryInterrupt(owner)` then `TryInterrupt(initiator)`|either refuses → **Refused**|
+|Skill|refuse a held `Dialogue`, then `TryInterrupt(caster)`|dialogue → **"not during dialogue"** failure; interruptible holder → pre-empt; non-interruptible holder → **"busy"** failure|
+|Dialogue|refuse in combat, then `TryInterrupt(owner)` (when there is one), then `TryInterrupt(initiator)`|in combat, or either refuses → **Refused**|
 |Status effect|`TryInterrupt(target)` if `effect.Blocks(heldKind)`|non-interruptible holder → no-op + warn|
 
 ### Registration sources
@@ -160,13 +160,15 @@ Precedence is derived entirely from the held activity's `ActivitySource` plus _h
 |Activity|Registered source|Interruptible?|
 |---|---|---|
 |Movement|`request.Source` (player or AI)|depends on caller|
-|Skill|`ActivitySource.PlayerInputExploration`|yes|
+|Skill — aiming|the caller's `source` (default `PlayerInputExploration`; AI turns pass `Ai`, scripted casts `Cinematic`)|player: yes; AI / scripted: no|
+|Skill — released (player cast)|`ActivitySource.Cinematic`|no|
 |Dialogue — initiator|`ActivitySource.PlayerInputExploration`|yes|
-|Dialogue — owner|`ActivitySource.Ai`|no|
+|Dialogue — owner (absent in an ownerless conversation, e.g. an item's)|`ActivitySource.Ai`|no|
 
 ### Resulting behaviour
 
 - **Skill pre-empts a player-driven move** — the move's `OnInterrupt` (its `Cancel`) fires, the move tears down, the skill takes the slot. The canonical interrupt path.
+- **A released skill cannot be interrupted.** Once targets are in and resources are spent, a player's cast holds its slot as `Cinematic`. Cancel input, a status effect and another skill all find it non-interruptible. Only the aim before release yields.
 - **An AI mid non-interruptible move cannot also start a skill** — `TryInterrupt` returns `false` on the AI's own move, so the skill fails "busy."
 - **You cannot open a dialogue with an NPC executing a non-interruptible `Ai` move** — the owner slot refuses. "Talk to a wandering NPC" therefore requires that NPC's movement to be interruptible.
 - **A dialogue-blocking status on the _owner_ does not end the conversation** — the owner side is `Ai` (non-interruptible), so the interrupt no-ops and warns; the same status on the _initiator_ tears the whole conversation down via the shared token.
@@ -177,7 +179,7 @@ All of these follow directly from the source-derived interruptibility rule; tuni
 
 ## 6. MovementService
 
-Single entry point for all movement (player input, AI, cutscene). Enforces eligibility gates, sequences `Plan → Validate → Execute`, registers the running move as an activity, and resolves the awaiting producer with a `MoveResult`. A new request cancels the agent's in-flight move (cancel-and-replan).
+Single entry point for all movement (player input, AI, cutscene). Enforces eligibility gates, sequences `Plan → Validate → Execute`, registers the running move as an activity, and resolves the awaiting producer with a `MoveResult`. A new request that plans and passes every gate cancels the agent's in-flight move (cancel-and-replan). A rejected one leaves that move running.
 
 ### Request flow
 
@@ -186,10 +188,13 @@ RequestMove(request, externalCancellation)
   1. unknown agent               → PlanFailed (fail, don't throw)
   2. registry gate               → busy with non-Movement ? GateRejected
   3. status gate                 → Immobilized ? GateRejected
-  4. same dest+intent in flight  → AlreadyMoving (leave running, no record)
-  5. CancelInFlight(self)        → cancel-and-replan
-  6. register InFlight + CTS     → linked to externalCancellation if cancelable
-  7. RunPipeline                 → Plan → Evaluate → Execute
+  4. a dash in flight            → GateRejected(ActivityConflict)
+  5. same dest+intent in flight  → AlreadyMoving (leave running, no record)
+  6. Plan                        → unusable ? PlanFailed
+  7. Evaluate (MovementRuleSet)  → blocked ? GateRejected(rule reason)
+  8. CancelInFlight(self)        → cancel-and-replan
+  9. register InFlight + CTS     → linked to externalCancellation if cancelable
+ 10. Execute                     → Begin(Movement) → Executor.MoveAlongPath
   finally: clear slot if still ours, dispose CTS
 ```
 
@@ -212,52 +217,85 @@ report.Result switch {
     HaltedByBudget => MoveResult.HaltedByBudget(report.DistanceTravelled),
     Cancelled => MoveResult.Cancelled(report.DistanceTravelled)
 }
-// Record committed movement only:
-if (report.Result is Completed or HaltedByBudget)
-    _ledger.Record(agentId, new MovePayload(destination, report.DistanceTravelled));
+// Record any walk that covered ground, a cancelled one included, while the agent is still registered:
+var walked = report.Result != Cancelled || report.DistanceTravelled > 0f;
+if (walked && _agents.ContainsKey(agentId))
+    _ledger.Record(agentId, new MovePayload(state.Position, report.DistanceTravelled));
 ```
 
-`Cancelled` carries the partial distance walked before the cancel — available to callers but deliberately not recorded (an abandoned half-step is feed noise, and the position change is captured by the snapshot path regardless). The `OperationCanceledException` catch is a safety net; the executor is expected to return a `Cancelled` report itself.
+`Cancelled` carries the partial distance walked before the cancel. A cancelled walk that covered any ground is recorded like a finished one, and `MovePayload` holds where the agent actually stopped, not where it was sent. Only two cases record nothing: a cancel before the first step, and an agent already unregistered (its body may be gone). The `OperationCanceledException` catch is a safety net that returns `Cancelled(0)` without recording. The executor is expected to return a `Cancelled` report itself.
+
+### Dash — skill-driven movement
+
+`Dash(agentId, route, speedScale, source)` runs a skill's caster along a route the skill has already checked, inside the skill's own activity. It does no planning, gates, budget, `Begin` or ledger entry, and fires no movement events. It sits in the in-flight table like a walk, so unregistering the agent or disposing the service stops it. `Cancel` skips it, and both `RequestMove` and a second `Dash` are refused while it runs (`GateRejected(ActivityConflict)`). Only the agent leaving the game cuts it short. An executor that gives up partway still counts as run (`Completed` with `PlanStatus.Partial`).
 
 ---
 
 ## 7. SkillService
 
-Validates a cast, pre-empts movement, awaits interactive target acquisition, applies effects, records.
+Validates a cast, pre-empts movement and awaits target acquisition. It then runs the skill's authored sequence (cues, caster movement, strikes) to its end and records.
 
 ### Validation chain
 
 All return `ActionResult.Failed` without touching the registry:
 
 ```
-caster exists → status allows skills → skill known → skill executable
-→ AP affordable → (if ammo) ranged weapon equipped → ammo affordable
+caster exists → skill known → SkillAvailability.BlockedReason:
+    status allows skills → skill executable → not disabled while dying
+    → AP affordable → (if ammo) a magazine for this skill → ammo affordable
+    → no gated effect would no-op (e.g. Reload on a full magazine)
+→ not in a dialogue
 ```
+
+`SkillAvailability` is shared with the skill bar, so a greyed button is exactly a cast the service would refuse. The refusal strings live in `SkillRefusals`.
 
 ### Pre-empt — honour the result
 
 ```csharp
+if (_activity.TryGetActivity(casterId, out var current) && current == ActivityKind.Dialogue)
+    return ActionResult.Failed(SkillRefusals.DuringDialogue);
+
 if (!_activity.TryInterrupt(casterId))
-    return ActionResult.Failed("Caster is busy with another activity.");
+    return ActionResult.Failed(SkillRefusals.Busy);
 ```
 
-A refused interrupt fails the cast cleanly; the skill never overwrites a non-interruptible activity's slot.
+A held conversation refuses the cast outright, even though the initiator's slot is player-driven. A refused interrupt fails the cast cleanly. The skill never overwrites a non-interruptible activity's slot.
 
 ### Target acquisition is the awaited collaborator
 
 ```csharp
-using (_activity.Begin(casterId, ActivityKind.Skill, ActivitySource.PlayerInputExploration, cts.Cancel))
+using (_activity.Begin(casterId, ActivityKind.Skill, source, cts.Cancel))
 {
-    var targetData = await _targetDriver.Acquire(casterId, skill.TargetingStrategy, cts.Token);
-    // consume AP / ammo → ApplyEffects → ConsumeUse → StartCooldown → ledger.Record
+    _sequencer.Play(sequence.OnAim, use);
+    var driver = DriverFor(skill.Data.Targeting, driverOverride);
+    var targetData = await driver.Acquire(casterId, DyingSkills.Targeting(caster, skill), cts.Token);
+    // clip to charge / walls → refuse (unaimed ground, AI out of reach, blocked after aim) → Spend AP + ammo
+    using var committed = ByPlayer(source) ? _activity.Begin(casterId, ActivityKind.Skill, ActivitySource.Cinematic) : null;
+    // OnSkillReleased → _sequencer.Run(steps) → ConsumeUse → StartCooldown → ledger.Record → OnSkillExecuted
 }
 ```
 
-`_targetDriver.Acquire` is the interactive boundary. It is resolved against `TargetingPresenter` in the interaction pipeline ([[Action System#9. Interaction Dispatch|§9]]): the player picks targets from the resolved skill area (driven by `SkillAreaService`) while the cast awaits. The skill activity holds the slot for the whole acquisition-plus-resolution window.
+`driver.Acquire` is the interactive boundary. The skill's targeting type picks the driver:
+- area skills resolve their own targets (`IAreaTargetDriver`)
+- targeted areas spread from a picked epicentre (`TargetedAreaDriver`)
+- ground skills pick a point (`GroundTargetDriver`)
+- everything else goes through `PlayerTargetDriver`, which resolves against `TargetingPresenter` in the interaction pipeline ([[Action System#9. Interaction Dispatch|§9]]). The player picks targets from the resolved skill area (driven by `SkillAreaService`) while the cast awaits.
+
+A caller such as an AI turn or the scenario harness can pass `driverOverride` to supply targets itself. The aim spans frames, so availability and the player's turn are checked again once targets are in. AP and ammo are spent together or not at all. The skill activity holds the slot for the whole acquisition-plus-resolution window.
+
+### Release and the skill sequence
+
+Once resources are spent the cast is **released**. A player's cast re-registers its slot as `Cinematic`, superseding its own entry without `TryInterrupt`. From then on nothing can interrupt it: not cancel input, not a status effect, not another skill. `SkillSequencer` then runs the steps authored on the skill's `SkillSequence`, in order:
+- cue steps go to `ISkillCuePlayer` (VFX, audio, pose)
+- projectile and wait steps await the game clock
+- `MoveCasterStep` dashes the caster through `MovementService.Dash` ([[Action System#6. MovementService|§6]])
+- each `StrikeStep` resolves the skill's effects with one hit roll per target and raises `OnSkillHit` per target
+
+The released steps take no cancellation token. Only the caster leaving the game mid-move stops the sequence (`CasterLeft` failure, nothing recorded). Every release ends in exactly one of `OnSkillExecuted` or `OnSkillCancelled`, even when an effect throws.
 
 ### Cancellation
 
-If `Acquire` is cancelled it throws `OperationCanceledException` out of `UseSkill`. The `Begin` scope disposes (slot freed), but `_ledger.Record` is never reached — a cancelled skill records nothing, consistent with the non-cancelled-terminal rule.
+Only the aim can be cancelled. If `Acquire` is cancelled, the service raises `OnSkillCancelled`, plays the sequence's `OnCancel` cues and rethrows `OperationCanceledException` out of `UseSkill`. The `Begin` scope disposes (slot freed), but `_ledger.Record` is never reached. A cancelled skill records nothing, consistent with the non-cancelled-terminal rule. A refusal after the aim takes the same cancel path and returns `ActionResult.Failed` without spending anything. Those refusals are: no ground point, an AI target out of range or sight, blocked after aim, or resources short.
 
 ### CancelSkill — scoped to actual skills
 
@@ -268,7 +306,7 @@ public bool CancelSkill(EntityId casterId) =>
        && _activity.TryInterrupt(casterId);
 ```
 
-Because the slot is kind-agnostic, `CancelSkill` confirms the held activity _is_ a skill before interrupting — otherwise it would cancel whatever the entity happens to be doing.
+Because the slot is kind-agnostic, `CancelSkill` confirms the held activity _is_ a skill before interrupting — otherwise it would cancel whatever the entity happens to be doing. After release the slot is `Cinematic` and `CancelSkill` returns `false`, so it cancels an aim, never a released cast.
 
 ---
 
@@ -278,20 +316,20 @@ A conversation is a durative, multi-entity activity. The service owns the **lock
 
 ### Two slots, one token
 
-A conversation locks **both** participants: the initiator (so the player can't walk away mid-line) and the owner NPC (so its AI can't be moved away). Two `Begin` scopes, disposed together, both routing their interrupt to one shared `CancellationTokenSource`:
+A conversation locks **both** participants: the initiator (so the player can't walk away mid-line) and the owner NPC (so its AI can't be moved away). Two `Begin` scopes, disposed together, both route their interrupt to one shared `CancellationTokenSource`. An empty `ownerId` means nobody is on the other side, as in an item's conversation; it locks only the initiator and records nothing. No conversation opens during combat:
 
 ```csharp
-if (!_activity.TryInterrupt(ownerId)) return DialogueResult.Refused;
-if (!_activity.TryInterrupt(initiatorId)) return DialogueResult.Refused;   // owner checked first
+var owned = !ownerId.IsEmpty;
+if (_gameMode.InCombat || (owned && !_activity.TryInterrupt(ownerId)) || !_activity.TryInterrupt(initiatorId))
+    return DialogueResult.Refused;   // owner checked first
 
 using var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
-// ... subscribe Finished ...
+// ... subscribe Finished (unsubscribed in finally) ...
 using (_activity.Begin(initiatorId, ActivityKind.Dialogue,
     ActivitySource.PlayerInputExploration, cts.Cancel))
-using (_activity.Begin(ownerId, ActivityKind.Dialogue, ActivitySource.Ai,       cts.Cancel))
+using (owned ? _activity.Begin(ownerId, ActivityKind.Dialogue, ActivitySource.Ai, cts.Cancel) : null)
 {
-    _conversation.StartOn(start);
-    _conversation.Advance();
+    _conversation.StartOn(start, ownerId);   // the flow player walks into the first line itself
     try { await finished.Task.AttachExternalCancellation(cts.Token); }
     catch (OperationCanceledException)
 	{
@@ -299,7 +337,8 @@ using (_activity.Begin(ownerId, ActivityKind.Dialogue, ActivitySource.Ai,       
 		return DialogueResult.Cancelled;
 	}
 	
-    _ledger.Record(initiatorId, new ConversedPayload(ownerId));
+    if (owned)
+        _ledger.Record(initiatorId, new ConversedPayload(ownerId));
     return DialogueResult.Completed;
 }
 ```
@@ -312,15 +351,23 @@ The **owner is checked first** so a refusal doesn't leave the initiator's move a
 
 ### Opaque start token
 
-`StartDialogue(initiatorId, ownerId, object start, token)` takes the Articy start token as `object` and never inspects it — the action system references no Articy types (the reason `IConversation.StartOn` also takes `object`). The token is resolved at the interaction handler ([[Action System#9. Interaction Dispatch|§9]]) and passed straight through. The initiator id is whatever the interaction supplied as `context.Interactor`.
+`StartDialogue(initiatorId, ownerId, object start, token)` takes the Articy start token as `object` and never inspects it — the action system references no Articy types (the reason `IConversation.StartOn` also takes `object`). The owner id goes on to `StartOn`, so the owner's lines land on that entity and not on a lookalike that shares its Articy speaker ([[Action System#10. Narrative Source|§10]]). The token is resolved at the interaction handler ([[Action System#9. Interaction Dispatch|§9]]) and passed straight through. The initiator id is whatever the interaction supplied as `context.Interactor`.
 
 ### Results
 
-`DialogueResult { Completed, Cancelled, Refused }`. An entity with no conversation never reaches the service — the resolver returns `false` and the handler never delegates.
+`DialogueResult { Completed, Cancelled, Refused, NoConversation }`. The service returns only the first three; `NoConversation` is declared but never used. An entity with no conversation never reaches the service — the resolver returns `false` and the handler never delegates.
 
 ### One coarse record
 
-Dialogue's real mutations land _mid-session_ through the presenter's `CommandExecutor` and Articy variable writes, not as a terminal payload. The ledger gets exactly **one** `ConversedPayload(ownerId)` on `Completed`, mirroring movement's skip-on-cancel.
+Dialogue's real mutations land _mid-session_ through the presenter's `CommandExecutor` and Articy variable writes, not as a terminal payload. The ledger gets exactly **one** `ConversedPayload(ownerId)` on `Completed` when there is an owner, and nothing on cancel.
+
+### Scripted conversations
+
+`PlayScripted(start, token)` plays a conversation nobody walked up to: a beat owned by an encounter (`DialoguePhase`). It has no initiator or owner, so it claims no activity and records nothing. It subscribes to `Finished` and calls `StartOn`. On cancellation it calls `Stop()` and returns `Cancelled`.
+
+### Input while a conversation is open
+
+`DialogueInputLock` holds player input from a conversation's first `LineReady` until `Finished`. `ConversationWalkHold` freezes a walk already under way when a conversation opens and resumes it on close. Walks the conversation itself orders, and skill dashes, keep running.
 
 ---
 
@@ -330,12 +377,12 @@ A click becomes a handled interaction in two stages: a pointer service resolves 
 
 ### Pointer resolution and dispatch
 
-`PointerInteractionService` ticks every frame (via the `IUpdate` chain) and owns hover and click:
+`PointerInteractionService` ticks every frame (via the `IUpdate` chain) for hover, and handles the confirm input as an event:
 
-- **UI first.** If the pointer is over UI, hover is cleared and nothing dispatches — UI is screen-space and always-on-top, so this short-circuits before any ray or physics query is paid for.
+- **Focus and UI first.** While the window is unfocused, hover clears and the click that restores focus is swallowed, because a backgrounded window reads the pointer as (0, 0). If the pointer is outside the window or over UI, hover is cleared and nothing dispatches. UI is screen-space and always-on-top, so this short-circuits before any ray or physics query is paid for.
 - **Hit resolution.** Otherwise it builds a ray (`IRayProvider`), queries every registered `IHitSource`, and keeps the best hit per `IHitArbitrationPolicy.IsBetter`. The winning `InteractionHit` carries an optional `IInteractable`, a distance, an `InteractionLayer` (`Interactable` / `Terrain`), and a world point.
 - **Hover.** The resolved interactable receives `OnHoverEnter` / `OnHoverExit` as the current target changes.
-- **Confirm.** On the confirm input: an `IInteractable` that is also an `IEntity` is dispatched into the pipeline with `InteractionContext.Default`; a `Terrain` hit instead raises `OnTerrainClicked(worldPoint)` (see below). Hover clears either way.
+- **Confirm.** On the confirm input the hit is resolved again at the pointer's current position. An `IInteractable` that is also an `IEntity` is dispatched into the pipeline with `new InteractionContext(party leader)`, and hover clears. A `Terrain` hit instead raises `OnTerrainClicked(worldPoint)` (see below).
 
 ### Hit sources
 
@@ -345,32 +392,35 @@ A click becomes a handled interaction in two stages: a pointer service resolves 
 public interface IHitSource { bool TryHit(in RayData ray, Vector2Data screenPosition, out InteractionHit hit); }
 ```
 
-`PhysicsHitSource` issues a single raycast against the combined interactable + terrain mask, then resolves the result from the collider's layer: an interactable-layer hit walks up for an `IInteractable` (falling through to the terrain check if the collider sits on both masks but exposes no interactable), a terrain-layer hit yields just a world point. The arbitration policy (`IHitArbitrationPolicy`) decides between competing sources — nearest, interactable-over-terrain, and so on.
+`PhysicsHitSource` issues a single non-allocating raycast (all hits) against the combined interactable + terrain mask. It keeps the nearest hit it can resolve from the collider's layer, and drops that hit when scenery in front hides it, unless the point lies inside that scenery (as an item on a shelf does): an interactable-layer hit walks up for an `IInteractable` (falling through to the terrain check if the collider sits on both masks but exposes no interactable), a terrain-layer hit yields just a world point. The arbitration policy (`IHitArbitrationPolicy`) decides between competing sources — nearest, interactable-over-terrain, and so on.
 
 ### The handler pipeline
 
 `InteractionPipeline` sorts its `IInteractionHandler`s by `Order` once at construction and, on `Dispatch`, runs them in order until one's `TryHandle` returns `true` — **first claim wins, the rest are skipped**.
 
 ```csharp
-public void Dispatch(IEntity target, InteractionContext context)
+public bool Dispatch(IEntity target, InteractionContext context)
 {
-    foreach (var h in _handlers)
-        if (h.TryHandle(target, context))
-            return;
+    for (var i = 0; i < _handlers.Length; i++)
+        if (_handlers[i].TryHandle(target, context))
+            return true;
+    return false;
 }
 ```
 
-`InteractionContext` carries the `Interactor` (the acting entity). `InteractionContext.Default` leaves it empty, and that is what the pointer dispatches — pointer-initiated interactions therefore arrive with no interactor set, and a handler that needs one reads `context.Interactor`.
+`InteractionContext` carries the `Interactor` (the acting entity). The pointer dispatches with the party leader as interactor, and a handler that needs the acting entity reads `context.Interactor`.
 
 `Order` encodes precedence:
 
 |Order|Handler|Claims when|Effect|
 |---|---|---|---|
 |`Targeting` (0)|`TargetingPresenter`|a targeting session is active|selects targets / swallows the click|
-|`Dialogue` (100)|`DialogueInteractionHandler`|the target resolves to a conversation|starts the dialogue activity|
-|`Pickup` (200)|`ItemPickupService`|the target is an `IItem`|equips to the party leader, records|
+|`Dialogue` (100)|`DialogueInteractionHandler`|the target resolves to a conversation|walks into talk range if needed, then starts the dialogue activity|
+|`Pickup` (200)|`ItemPickupService`|the target is an `IItem`|walks the party leader into reach if needed, then equips or consumes the item and records|
 
 Because targeting sits at `Order 0`, an open targeting session intercepts entity clicks before dialogue or pickup can see them; with no session it returns `false` and the click falls through.
+
+The pipeline is also an `IInteractionApproach`. `TryGetApproach` asks the handlers, in the same order, where the interactor would walk before acting, without starting anything, so the move preview can draw the walk a click on an NPC or item would make. Targeting is passed over, since it claims only while a skill aims.
 
 ### TargetingPresenter — the live end of skill acquisition
 
@@ -378,69 +428,59 @@ This handler is what [[Action System#7. SkillService|§7]]'s awaited target acqu
 
 - **Self-target** highlights the caster directly and waits.
 - **Single / multi** drive the skill area: `SkillAreaService.BeginTargeting(caster, range)`, subscribe `OnAreaChanged`, and on every change recompute the desired candidate set as `InAreaEntities` filtered by the strategy (excluding the caster for single/multi), diffing it against the currently highlighted set to add and clear highlights.
+- **Area / ground** strategies drive the same skill area. A click on any highlighted entity confirms an area aim, and a ground skill lands at the clicked entity's position when it is in range. Clicking an already-picked target settles for the targets picked so far.
 
 While a session is open, `TryHandle` claims **every** entity click. Clicking a highlighted candidate adds it via `session.TryAdd` and marks it selected; when the session reports complete it resolves the `UniTaskCompletionSource<TargetData>` and tears down. Clicking a non-candidate entity is still claimed (returns `true`) so stray clicks don't leak through to dialogue or pickup mid-targeting. `End` releases the highlights and ends the skill-area session; `EndIfCurrent` does so only if the supplied completion is the live one, guarding against a stale cancellation tearing down a newer session.
 
 ### DialogueInteractionHandler
 
-Resolves the target to a conversation start token and, on success, delegates to `DialogueService` and claims the interaction:
+Resolves the target to a conversation start token and, on success, claims the interaction. If the interactor is within the target's talk range (`IConversationOwner.TalkRange`, default 2.5 m, planar), it delegates to `DialogueService` at once. Otherwise it first walks the interactor to 80% of that range with a `PlayerInputExploration` move, and talks only if the walk completes in reach:
 
 ```csharp
 public bool TryHandle(IEntity target, InteractionContext context)
 {
-    if (!_resolver.TryResolve(target, out var start))
+    if (_sceneLifetime.IsCancellationRequested || !_resolver.TryResolve(target, out var start))
         return false;
-    _dialogue.StartDialogue(context.Interactor, target.EntityId, start, CancellationToken.None).Forget();
+    if (!_entities.TryGet(context.Interactor, out var interactor)) return true;
+    if (InReach(interactor, target)) Talk(interactor, target, start);
+    else ApproachAndTalk(interactor, target, start).Forget();
     return true;
 }
 ```
 
 - The handler does **not** call `StartOn` — the service does, after acquiring both locks ([[Action System#8. DialogueService|§8]]).
-- The initiator is `context.Interactor`. It passes `CancellationToken.None`, so the conversation's teardown is driven entirely by the registry interrupt callbacks (status, pre-empt), not an external token.
-- `TryHandle` claims synchronously while `StartDialogue` may return `Refused` after its await; for player-initiated talk the initiator lock effectively always succeeds, so the click is treated as consumed.
+- The initiator is `context.Interactor`. The handler passes a scene-lifetime token, cancelled when the scene container disposes the handler, so an open conversation closes on unload. Otherwise teardown is driven by the registry interrupt callbacks (status, pre-empt). A click elsewhere during the approach cancels the walk, and the conversation with it.
+- `TryHandle` claims synchronously, while `StartDialogue` may still return `Refused` (in combat, or against a non-interruptible owner). The click is consumed even when no conversation opens.
 
 ### ItemPickupService
 
-Claims any `IItem`, equips it to the party leader, and records — an instantaneous action with no registry slot, so it is **not** an activity:
+Claims any `IItem` for the party leader. The pickup itself is an instantaneous action with no registry slot, so it is **not** an activity, but reaching the item may take a movement activity:
 
-```csharp
-public bool TryHandle(IEntity target, InteractionContext context)
-{
-    if (target is not IItem item) return false; // not claimed
-    if (_entities.TryGet<IEquipmentAgent>(leaderId, out var equipper)
-        && _definitions.TryGet<ItemDefinition>(item.Id, out var def))
-    {
-        var ammo = item is IAmmoCarrier carrier ? carrier.LoadedAmmo : -1;
-        if (equipper.Equipment.TryEquip(def, item.Id, ammo))
-        {
-            _ledger.Record(leaderId, new PickUpItemPayload(item.Id, ammo));
-            _factory.Despawn(item);
-        }
-    }
-    
-    return true; // claims any item; records only on equip
-}
-```
+- **Refusals first.** These cases raise `Refused(picker, prefab, PickUpRefusal)` and still claim the click: an unknown item definition, a turn on which the player may not act, full hands (equipment), or nobody to fire the ammo (consumables).
+- **Reach.** Within 1.5 m planar and 1.5 m in height, the item is taken at once. Otherwise the leader walks to the first reachable stop out of up to four candidates near the item, and takes it on arrival. A cancelled walk drops the pickup silently; failing to arrive refuses with `OutOfReach`.
+- **Take.** An equipment item is `TryEquip`ped with its `LoadedAmmo` (`-1` for a non-ammo item). A `ConsumedOnPickup` item adds its ammo supply to a ranged carrier and grants its skills. On success the service records `PickUpItemPayload(prefabId, ammo)`, plays the pickup sound and despawns the item. An item with a dialogue plays it through `DialogueService.StartDialogue` with no owner. It plays before the pickup, and a cancelled conversation abandons the pickup; an item flagged `DialogueAfterPickup` plays it 0.3 s after instead.
 
-The interaction is claimed for any item (returns `true`), but the record and despawn happen only on a successful `TryEquip`. `ammo` is the carrier's `LoadedAmmo`, or the sentinel `-1` for a non-ammo item. `Drop(agent, at, ct)` is the asynchronous inverse — unequip, spawn the world item, restore its ammo, then record `DropItemPayload` against the dropping agent.
+`Drop(agent, at, ct, item)` is the asynchronous inverse. It spawns the world item, then unequips (despawning the spawn if that fails), restores its ammo, and records `DropItemPayload` against the dropping agent.
 
 ### Terrain clicks → movement
 
-A confirmed terrain hit does not enter the handler pipeline. `PointerInteractionService` raises `OnTerrainClicked(worldPoint)` carrying the already-resolved world point, so movement (or any other subscriber) acts on it without re-raycasting. This is the entry point that turns a ground click into a `MovementRequest`.
+A confirmed terrain hit does not enter the handler pipeline. `PointerInteractionService` raises `OnTerrainClicked(worldPoint)` carrying the already-resolved world point, so movement (or any other subscriber) acts on it without re-raycasting. `GroundClickMovementInput` is the subscriber that turns a ground click into a `MovementRequest` for the party leader. While an area skill awaits confirmation, `ConfirmedAreaTargetDriver` also listens and treats a terrain click as the confirm.
 
 ---
 
 ## 10. Narrative Source
 
-The Articy boundary. The action system sees only `INarrativeSource` / `IConversation`; the concrete `DialogueSource` is the only thing that touches the Articy flow player.
+The Articy boundary. The action system sees only `IConversation`; the concrete `DialogueSource` is the only thing that touches the Articy flow player.
 
 ### Contracts
 
 ```csharp
-interface INarrativeSource { event Action<NarrativeLine> LineReady; event Action Finished; }
-
-interface IConversation : INarrativeSource {
-    void StartOn(object start); // start is ArticyRef | IArticyObject | null
+interface IConversation {
+    event Action<NarrativeLine> LineReady;
+    event Action Finished;
+    bool IsOpen { get; }
+    NarrativeLine Current { get; }   // the line on screen, or null
+    void StartOn(object start, EntityId owner = default); // start is ArticyRef | IArticyObject | null
     void Advance();
     void Choose(in Choice choice);
     void Stop();
@@ -451,17 +491,17 @@ interface IConversation : INarrativeSource {
 
 A `MonoBehaviour` wrapping `ArticyFlowPlayer`. Translates flow callbacks into `LineReady` / `Finished`:
 
-- `OnBranchesUpdated` with empty/null branches → `Finished`; otherwise builds a `NarrativeLine` from the paused object (via `ArticyLineFactory`, with `CommandFactory` and `ISpeakerResolver`) and fires `LineReady`.
+- `OnBranchesUpdated` with empty/null branches → `Finished`. Otherwise it builds a `NarrativeLine` from the paused object (via `ArticyLineFactory`, with `CommandFactory`, `ISpeakerResolver` and the conversation's owner), fires `LineReady` and keeps a copy as `Current`. A language change re-emits the current line flagged `Rebuilt`.
 - `BuildChoices` emits an empty list for ≤1 branch (linear advance) and a `Choice` per valid branch otherwise, labelling from `IObjectWithLocalizableMenuText` → `IObjectWithLocalizableText` → `">>>"`.
-- `Stop()` clears branches and `StartOn`, returning the player to a neutral state.
+- `Stop()` clears branches, `Current` and `StartOn`, returning the player to a neutral state, and fires `Finished`.
 
 ### Speaker resolution
 
-`ISpeakerResolver.TryResolve(flowObj, out EntityId speakerId, out string speakerName)` maps a flow object's speaker to a domain identity and display name. `ArticySpeakerResolver` walks `IEntitySource.All`, matching an entity's `IArticyLinked.ArticyObject.Id` to the speaker, and falls back to display-name-only when no entity is linked. `NullSpeakerResolver` is the no-op default.
+`ISpeakerResolver.TryResolve(flowObj, intended, out EntityId speakerId, out string speakerName, out string speakerTechnicalName)` maps a flow object's speaker to a domain identity, display name and technical name. `ArticySpeakerResolver` walks `IEntitySource.All`, matching an entity's `IArticyLinked.ArticyObject.Id` to the speaker. When several entities share the speaker, `intended` (the conversation's owner) wins; failing that, the one nearest the party leader does. With no entity linked it falls back to the Articy names alone.
 
 ### Emission cadence
 
-`DialogueSource` emits one `LineReady` or `Finished` per drive call (`Advance` / `Choose`). `DialoguePresenter` renders each `LineReady` as it arrives without awaiting between lines, so it tolerates an auto-advancing node that produces several lines in quick succession.
+`DialogueSource` emits one `LineReady` or `Finished` per drive call (`Advance` / `Choose`). It also emits the first line when `StartOn` is assigned, because the flow player walks into it by itself; this is why the service does not call `Advance` after `StartOn`. `DialoguePresenter` renders each `LineReady` as it arrives, without awaiting between lines; a new line ends any text reveal still running. It therefore tolerates an auto-advancing node that produces several lines in quick succession.
 
 ---
 
@@ -476,7 +516,7 @@ public bool CanStart(EntityId entity, in ActivityQuery query) =>
     !_entities.TryGet(entity, out IActor a) || a.StatusEffects.CanStart(query);
 ```
 
-Movement's `Immobilized` rejection and skill's "caster cannot use skills" both flow through this. An unknown entity is permissive by design.
+Movement's `Immobilized` rejection flows through this. Skill's "caster cannot use skills" asks the same `StatusEffects.CanStart` directly on the caster, through `SkillAvailability` ([[Action System#7. SkillService|§7]]). An unknown entity is permissive by design.
 
 ### As an interrupter
 
@@ -487,7 +527,7 @@ public bool Apply(EntityId target, StatusEffect effect)
     if (!actor.StatusEffects.Apply(effect)) return false;
 
     if (_activity.TryGetActivity(target, out var kind) && effect.Blocks(kind) && !_activity.TryInterrupt(target))
-        Log.Warn($"[Status] {effect.Type} could not interrupt protected {kind} on '{target}'.");
+        Log.Warn(() => $"{effect.Type} could not interrupt protected {kind} on '{target}'.");
 
     return true;
 }
@@ -499,7 +539,7 @@ One slot per entity means one check: read the held kind, and if the effect block
 
 ## 12. ActionLedger
 
-Append-only history. Each `Record` stamps the actor, the current turn (`TurnCounter.Current`), and an `IActionPayload`, then fires `OnActionRecorded`.
+Append-only history, bounded: a ring of the newest `ActionLedger.Capacity` (64) records, which overwrites the oldest first. Each `Record` stamps the actor, the current turn (`TurnCounter.Current`), and an `IActionPayload`, then fires `OnActionRecorded(actorId)`. `Records` reads the window oldest first.
 
 ```csharp
 public readonly struct ActionRecord { EntityId ActorId; TurnNumber Turn; IActionPayload Payload; }
@@ -507,23 +547,23 @@ public readonly struct ActionRecord { EntityId ActorId; TurnNumber Turn; IAction
 
 ### Role
 
-The ledger drives the **player-facing action feed**. World-state reconstruction is handled by the save/load snapshot path (`IPersistableEntity.Capture` / `Restore` reads and writes live state), so the ledger does not need to capture every mutation — cancelled partials and mid-dialogue variable writes are intentionally omitted. The feed wants committed, presentable outcomes, which is exactly what gets recorded.
+The ledger drives the **player-facing action feed**. World-state reconstruction is handled by the save/load snapshot path (`IPersistableEntity.Capture` / `Restore` reads and writes live state), so the ledger does not need to capture every mutation — cancelled aims and conversations and mid-dialogue variable writes are intentionally omitted. The feed wants committed, presentable outcomes, which is exactly what gets recorded.
 
 ### Payloads
 
 |Payload|Source|Recorded when|Carries|
 |---|---|---|---|
-|`MovePayload`|Movement activity|move `Completed` / `HaltedByBudget`|destination, distance travelled|
-|`UseSkillPayload`|Skill activity|skill resolves|skill id, target ids|
-|`ConversedPayload`|Dialogue activity|dialogue `Completed`|owner id|
-|`PickUpItemPayload`|`ItemPickupService` interaction|successful equip by party leader|prefab id, ammo|
+|`MovePayload`|Movement activity|move `Completed` / `HaltedByBudget`, or `Cancelled` after walking some distance|end position (where it stopped), distance travelled|
+|`UseSkillPayload`|Skill activity|a released skill runs its sequence to the end|skill id, target ids, damage dealt, health healed, damage types, missed targets, status outcomes (landed / resisted)|
+|`ConversedPayload`|Dialogue activity|a dialogue with an owner `Completed`|owner id|
+|`PickUpItemPayload`|`ItemPickupService` interaction|the party leader equips or consumes the item|prefab id, ammo|
 |`DropItemPayload`|`ItemPickupService.Drop`|after unequip + spawn|prefab id, ammo|
 
 For the item payloads, `ammo` is the loaded round count, or `-1` for an item that does not carry ammo.
 
 ### Ordering
 
-Records are turn-stamped. Within a single turn, ordering is `List` insertion order.
+Records are turn-stamped. Within a single turn, ordering is insertion order; past 64 records the oldest drop out.
 
 ---
 
@@ -536,16 +576,17 @@ producer → RequestMove(request)
   ├─ unknown agent → PlanFailed
   ├─ registry: held by non-Movement? → GateRejected(ActivityConflict) ⟵ skill / dialogue holds the slot
   ├─ status: CanStart(Movement)? → GateRejected(Immobilized)
+  ├─ dash in flight? → GateRejected(ActivityConflict)
   ├─ same dest+intent in flight? → AlreadyMoving (no record)
-  ├─ CancelInFlight(self) → cancel-and-replan (prior move → Cancelled, no record)
-  └─ RunPipeline
-       Plan ─ unusable ───────────────────────→ PlanFailed
-       Evaluate (MovementRuleSet) ─ blocked ──→ GateRejected(rule reason)
+  ├─ Plan ─ unusable ───────────────────────→ PlanFailed
+  ├─ Evaluate (MovementRuleSet) ─ blocked ──→ GateRejected(rule reason)
+  ├─ CancelInFlight(self) → cancel-and-replan (prior move → Cancelled, records its partial walk)
+  └─ Execute
        using Begin(Movement, request.Source, Cancel):
          await Executor.MoveAlongPath(path, budget, token)
            ├─ Completed → record MovePayload → MoveResult.Completed
-           ├─ HaltedByBudget → record MovePayload → MoveResult.Halted
-           └─ Cancelled → (no record) → MoveResult.Cancelled(partial)
+           ├─ HaltedByBudget → record MovePayload → MoveResult.HaltedByBudget
+           └─ Cancelled → record MovePayload if any distance walked → MoveResult.Cancelled(partial)
 ```
 
 The ground-click entry point: a terrain click resolves to `OnTerrainClicked(worldPoint)` ([[Action System#9. Interaction Dispatch|§9]]), which a subscriber turns into the `RequestMove` above — no re-raycast, the world point is already resolved.
@@ -558,7 +599,7 @@ StatusEffectService.Apply (effect blocks Movement) → TryInterrupt(agent) → m
 DialogueService.StartDialogue (agent is owner) → TryInterrupt(agent) → AI move cancels (if interruptible) OR Refused
 ```
 
-Every terminal path routes through `Complete`, so `OnCompleted` fires exactly once per request — `AlreadyMoving` is the one no-op exception (nothing of that request ran).
+Every terminal path routes through `Complete`, so `OnCompleted` fires exactly once per request — `AlreadyMoving` is the one no-op exception (nothing of that request ran). A skill's `Dash` fires no movement events at all.
 
 ---
 
@@ -568,7 +609,9 @@ Every terminal path routes through `Complete`, so `OnCompleted` fires exactly on
     
 - **`CancelInFlight` does not dispose the CTS.** It cancels and removes the in-flight entry; the awaiting `RequestMove` disposes its own CTS in its `finally`. Disposing in both places would double-dispose.
     
-- **Eligibility gates run before cancel-and-replan.** A rejected request must never tear down a healthy in-flight move. Order is: gates → dedup → `CancelInFlight` → register new.
+- **A released skill is never cancelled.** Only the aim yields. After release a player's cast holds a `Cinematic` slot, its sequence steps take no token, and its dash ignores `Cancel` and refuses competing moves. Only the caster leaving the game stops it. A cut-short skill gets no refund path; the rule is to close the cancel path instead.
+    
+- **Eligibility gates run before cancel-and-replan.** A rejected request must never tear down a healthy in-flight move. Order is: registry and status gates → dash / dedup → plan → rule gates → `CancelInFlight` → register new.
     
 - **Dialogue's `finally` is load-bearing.** Cancel, external token, or pre-empt must all unsubscribe `Finished` _and_ call `Stop()`, or the next `StartOn` runs against a flow player with stale subscriptions/branches.
     
@@ -580,7 +623,7 @@ Every terminal path routes through `Complete`, so `OnCompleted` fires exactly on
     
 - **Interaction claim is synchronous; activity outcome is not.** A handler's `TryHandle` returns `true` immediately, while the activity it kicked off (dialogue) resolves later and may refuse. Claiming the interaction does not guarantee the activity started.
     
-- **Pointer-dispatched context has no interactor.** The pointer dispatches `InteractionContext.Default`, whose `Interactor` is empty. Handlers that need the acting entity (dialogue's initiator) read it from the context; a non-pointer caller that needs a real interactor must supply one.
+- **Pointer-dispatched context carries the party leader.** The pointer dispatches `new InteractionContext(leaderId)`. Handlers that need the acting entity (dialogue's initiator) read it from the context. When the interactor resolves to no entity, the dialogue handler still claims the click and does nothing. Item pickup ignores the context and always acts for the party leader.
     
 
 ---
@@ -593,7 +636,7 @@ This is coordination code, not a hot path; it runs on user/AI action, not per fr
 |---|---|
 |Each move/skill/dialogue request|one `CancellationTokenSource` (linked if an external token is cancelable)|
 |Registry `Begin`|one `Entry` + one `Scope`|
-|Dialogue|one `UniTaskCompletionSource` for `Finished`, two `Begin` scopes|
-|Each recorded action|one `IActionPayload` + one `ActionRecord` appended to the ledger list|
+|Dialogue|one `UniTaskCompletionSource` for `Finished`, one `Begin` scope per participant (two with an owner)|
+|Each recorded action|one `IActionPayload`; the `ActionRecord` struct is written into the ledger's fixed 64-slot ring|
 
-None are on a per-frame path, so pooling them is not worth the complexity. The one growth to be aware of is the ledger's `List<ActionRecord>`, which accumulates for the session's lifetime.
+None are on a per-frame path, so pooling them is not worth the complexity. The ledger does not grow: it keeps the newest 64 records and overwrites the oldest.

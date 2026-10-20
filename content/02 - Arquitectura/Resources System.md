@@ -1,11 +1,11 @@
 ## Overview
 
-The resource system is built around a clear separation between the interface contract, the bounded behaviour, and the concrete resource types. Resources are owned by `ActorResources`, which implements `IResourceHolder` and is the single point of contact for anything that wants to read or modify an actor's resources.
+The resource system is built around a clear separation between the interface contract (Core), the bounded behaviour and concrete resource types (Gameplay), and the holder (Systems). Resources are owned by `ActorResources`, which implements `IResourceHolder` and is the single point of contact for anything that wants to read or modify an actor's resources. Four resource types exist: `Health`, `ActionPoints`, `Sanity` and `Ammunition`.
 
 The system operates at two levels:
 
 - **Live resources** — `IResource` instances owned by `ActorResources`, firing events and driving UI
-- **Simulated resources** — `SimulatedResourceSet`, a pure value-type snapshot used by AI and planning code without touching live state
+- **Simulated resources** — `SimulatedAgentState`, an AI-layer snapshot (`ISimulatedActor`) holding a `ResourceState[]` copied from the live actor, used by AI and planning code without touching live state
 
 ---
 
@@ -16,75 +16,61 @@ The system operates at two levels:
 Every concrete resource type follows the same chain:
 
 ```
-IResource
-  └── IBoundedResource
-        └── Resource (abstract)
-              └── BoundedResource (abstract, Func<int> getMax)
-                    └── Health (sealed)
+IResource                                  (Core)
+  └── IBoundedResource                     (Core)
+Resource : IResource (abstract)            (Gameplay)
+  ├── Ammunition (sealed, unbounded)
+  └── BoundedResource : IBoundedResource (abstract, Func<int> getMax)
+        ├── Health (sealed)
+        ├── ActionPoints (sealed)
+        └── Sanity (sealed)
 ```
 
 Adding a new resource means extending `BoundedResource` (or `Resource` for an unbounded resource) and declaring its `ResourceType`. Nothing else in the system needs to change.
 
-### ResourceSet
+Ammunition is split in two. `Ammunition` (`ResourceType.Ammunition`) is an unbounded resource holding the actor's reserve. It starts at 0, is saved as `AmmoReserve` and is drained by `ReloadWeaponEffect`. The loaded rounds live on the weapons' magazines, not in `ActorResources`, and the simulation mirrors them separately (`RoundsMissing` / `LoadRounds`). `ActionPoints` also carries `MovementCredit`, the metres already paid for with a spent point and not yet walked.
 
-`ResourceSet` is an immutable value type expressing a multi-resource amount — a cost, a yield, or a restoration. It is the preferred way to express any operation that touches more than one resource at once.
+### ResourceState and per-type arrays
 
-```csharp
-var cost = ResourceSet.Empty
-    .With(ResourceType.ActionPoints, 2)
-    .With(ResourceType.Sanity, 1);
+`ResourceState` is a readonly struct (`Current`, `int? Max`) that snapshots one resource. `Max` is null for an unbounded resource. It offers `IsEmpty`, `IsFull`, `Ratio`, `CanAfford(amount)`, `WithConsumed(amount)` (floored at zero) and `WithRestored(amount)` (capped at `Max` when bounded).
 
-if (actor.CanConsume(cost))
-    actor.Consume(cost);
-```
+There is no multi-resource amount type. Operations touch one resource at a time through `IResourceHolder` (`CanConsume(type, amount)`, `Consume`, `Restore`, `SetToMax`), for example `caster.Resources.Consume(ResourceType.ActionPoints, apCost)`.
 
-Iteration over a `ResourceSet` uses `RawAmounts`, a `ReadOnlySpan<int?>` that is allocation-free:
-
-```csharp
-var amounts = set.RawAmounts;
-for (int i = 0; i < amounts.Length; i++)
-    if (amounts[i].HasValue)
-        // use (ResourceType)i and amounts[i]!.Value
-```
-
-`ResourceSet` does not use `IEnumerable` or `yield return` anywhere — there are no enumerator allocations on hot paths.
+Per-type storage is a plain array indexed by `(byte)ResourceType` and sized `ResourceTypes.Capacity`, derived from the enum. `ActorResources` holds an `IResource[]` and `SimulatedAgentState` holds a `ResourceState[]`. This avoids dictionary lookups and enumerator allocations on hot paths.
 
 ### Simulation
 
-AI and planning code must not consume live resources speculatively. `SimulatedResourceSet` provides an identical API over a pure value-type snapshot:
+AI and planning code must not consume live resources speculatively. `SimulatedAgentState` (`Systems/AI/Simulation`, pooled through `SimulationStatePool`) is a mutable snapshot of an agent that implements `ISimulatedActor`. Effects that implement `ISimulableEffect` resolve against it instead of the live actor:
 
 ```csharp
-var sim = SimulatedResourceSet.From(actor);
-sim.Consume(cost);   // no live state touched and can speculate freely
-var state = sim.GetState(ResourceType.ActionPoints);
+var sim = pool.GetAgentState().Reset(agent);            // copies resources, skills, statuses, resistances
+sim.ConsumeResource(ResourceType.ActionPoints, 2);      // no live state touched
+var state = sim.GetResource(ResourceType.ActionPoints); // ResourceState
 ```
 
-Cloning a simulation is a plain struct copy:
+`ConsumeResource` is clamped at zero and `RestoreResource` is clamped at the max when bounded, both through `ResourceState.WithConsumed` / `WithRestored`. `SimulatedAgentState` also tracks fractional expected damage, pending status damage and magazine contents (`RoundsMissing` / `LoadRounds`) that have no live-resource equivalent.
 
-```csharp
-var branch = SimulatedResourceSet.From(sim);
-```
-
-`SimulatedResourceSet` is populated from `IResourceHolder.GetAllStates()`, which returns the cached `ResourceState[]` from `ActorResources` rather than allocating on every call.
+`Reset(IAgent)` populates the resource array from `IResourceHolder.GetAllStates()`, which returns the cached state dictionary from `ActorResources` rather than allocating on every call.
 
 ### State cache
 
-`ActorResources` maintains a `ResourceState[]` and a `Dictionary<ResourceType, ResourceState>` that are rebuilt lazily when dirty. The dirty flag is set whenever a resource's `OnChanged` event fires, or whenever a resource is registered or unregistered.
+`ActorResources` maintains a `Dictionary<ResourceType, ResourceState>` that is rebuilt lazily when dirty. The dirty flag is set whenever a resource's `OnChanged` event fires, whenever a resource is registered or unregistered, and whenever a tracked stat changes (maxima are read off the stats). `Actor.Initialize` wires the last one by calling `TrackStats(Stats)`.
 
 ```
 Register / Unregister     → _stateDirty = true
 Resource.OnChanged fires  → _stateDirty = true
+Stats.OnStatChanged fires → _stateDirty = true
 GetAllStates() called     → RebuildCache() if dirty, then return _cachedStateDict
 ```
 
-This means `SimulatedResourceSet.From(holder)` and any other caller of `GetAllStates()` never allocate a new dictionary at runtime — they read the pre-built cache.
+This means `SimulatedAgentState.Reset(agent)` and any other caller of `GetAllStates()` never allocate a new dictionary at runtime — they read the pre-built cache.
 
 ### BoundedResource max scaling
 
 `BoundedResource` accepts a `Func<int>` for `Max` rather than a fixed integer. This means max values can be derived from a stat system without any coupling between the resource and whatever owns the stats:
 
 ```csharp
-Health.Create(() => stats.Get(StatType.MaxHealth));
+Health.Create(() => Stats.Derived.MaxHP);
 ```
 
 `SetToMax`, `ClampToMax`, and `Ratio` all read from the delegate on each access.
@@ -106,6 +92,14 @@ Health.Create(() => stats.Get(StatType.MaxHealth));
 
 `OnDepleted` and `OnFilled` fire at most once per transition — calling `SetCurrent(0)` when already at zero does not refire `OnDepleted`.
 
+`Health` adds `OnDamaged(int taken)`. It fires only from `TakeDamage`, which wraps `ConsumeClamped`. Costs, drains and restores change health without raising it.
+
+Consumers of these events:
+- `LeaderResourcePresenter` redraws the HP and AP bars from `OnChanged`. It also redraws on `Stats.OnStatChanged` when the max moved.
+- `ObstacleActor` destroys itself on `Health.OnDepleted`.
+- `ActionPointMovementBudget` clears its movement credit on `ActionPoints.OnFilled`.
+- `Agent` flags a hurt reaction from `Health.OnDamaged`.
+
 ---
 
 ## Adding a New Resource Type
@@ -113,7 +107,8 @@ Health.Create(() => stats.Get(StatType.MaxHealth));
 1. Add a value to `ResourceType` in Core
 2. Define a sealed class extending `BoundedResource` (or `Resource` for unbounded) in `Gameplay/Resources`
 3. Implement `Type` to return the new enum value
-4. Optionally, register an instance into `ActorResources` at actor setup time
+4. Register an instance into `ActorResources` at actor setup time (`Actor.Initialize` registers `Health`; `Agent.RegisterResources` registers `ActionPoints`, `Sanity` and `Ammunition`)
+5. If the debug resource commands should accept it by short name, add a case to `ResourceTypeParser` (`hp`, `ap` and `sanity` exist today; any other type is accepted only by its enum name)
 
 ```csharp
 public sealed class ActionPoints : BoundedResource
@@ -126,9 +121,10 @@ public sealed class ActionPoints : BoundedResource
 ```
 
 ```csharp
-// At actor setup
-_resources.Register(ActionPoints.Create(() => stats.Get(StatType.MaxAP)));
-_resources.Register(Health.Create(() => stats.Get(StatType.MaxHealth)));
+// At agent setup
+resources.Register(ActionPoints.Create(() => Stats.Derived.MaxAP));
+resources.Register(Sanity.Create(() => Stats.Derived.MaxSanity));
+resources.Register(Ammunition.Create(initial: 0)); // unbounded: extends Resource, no max delegate
 ```
 
-No other changes are required. `ResourceSet.Capacity`, the state cache, and `SimulatedResourceSet` all derive their size from the enum at runtime.
+No other changes are required. `ResourceTypes.Capacity`, the `ActorResources` array and state cache, and `SimulatedAgentState`'s `ResourceState[]` all derive their size from the enum at runtime.
