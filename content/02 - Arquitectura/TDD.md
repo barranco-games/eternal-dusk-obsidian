@@ -358,11 +358,43 @@ La especificación técnica detallada de cada sistema se mantiene en el capítul
 - Con código pero sin página propia, por ser pequeños: los ajustes de usuario (Core/Settings, Systems/Settings), los servicios de plataforma (reloj de juego, bucle de actualización, pantalla y tasa de fotogramas; Core/Platform, Engine/Unity/Platform) y la pausa (IPauseService, Core/GameState), la analítica y el informe de errores (Engine/Analytics), el perfilado (Core/Profiling, Engine/Profiling) y los VFX de habilidades (Engine/Unity/Vfx).
     
 
-TODO: Un diagrama de arquitectura debe acompañar esta sección.
+```mermaid
+---
+config:
+  flowchart:
+    wrappingWidth: 400
+---
+flowchart TB
+    subgraph Externas["Unity y plugins"]
+        direction LR
+        Unity["Unity 6 (URP)<br/>Input System · Cinemachine<br/>Addressables · Localization<br/>Burst · Mathematics"]
+        Plugins["Articy · FMOD<br/>Odin Inspector"]
+    end
 
-|   |
-|---|
-|[ Diagrama de arquitectura ]|
+    Engine["<b>EternalDusk.Engine</b><br/>entidades MonoBehaviour<br/>instaladores de Reflex<br/>encuentros · niveles · narrativa<br/>audio · vistas de UI"]
+
+    subgraph Puro["C# puro, sin Unity"]
+        Systems["<b>EternalDusk.Systems</b><br/>acciones · turnos · IA<br/>áreas · grupo · equipamiento<br/>guardado · presentadores de UI"]
+        Gameplay["<b>EternalDusk.Gameplay</b><br/>estadísticas · recursos<br/>combate y dados<br/>efectos de estado · definiciones"]
+        Core["<b>EternalDusk.Core</b><br/>contratos y primitivas<br/>EntityId · PrefabId<br/>StatType · ResourceType"]
+    end
+
+    subgraph Fuera["Fuera de las capas"]
+        direction LR
+        Editor["EternalDusk.Editor<br/>herramientas de editor"]
+        Tests["Pruebas<br/>EditMode por capa<br/>PlayMode"]
+        Shaders["Assembly-CSharp<br/>compute shaders · HLSL<br/>render features"]
+    end
+
+    Engine --> Unity
+    Engine --> Plugins
+    Engine --> Systems
+    Systems --> Gameplay
+    Gameplay --> Core
+    Editor --> Engine
+```
+
+Cada flecha apunta a un ensamblado del que depende el de origen. Una capa puede usar cualquier capa interior, no solo la contigua: Engine también referencia Gameplay y Core directamente. UniTask está disponible en todas las capas y Reflex desde Gameplay hacia afuera.
 
 ## 2.7 Política de ramas
 
