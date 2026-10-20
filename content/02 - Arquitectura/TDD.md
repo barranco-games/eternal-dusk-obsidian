@@ -339,13 +339,20 @@ La especificación técnica detallada de cada sistema se mantiene en el capítul
     
 - [[Enemy AI]]: planificación del turno enemigo por búsqueda sobre estados simulados, objetivos por agente y conocimiento compartido del grupo dentro de un encuentro.
     
+- [[Equipment System]]: lo que lleva cada agente, con un juego de manos cuerpo a cuerpo y otro a distancia, cargadores por arma y la búsqueda del arma que concedió cada habilidad.
+    
+- [[UI Architecture]]: vistas, presentadores y servicio sobre UI Toolkit, la raíz PanelRenderer y su recarga en vivo, los presentadores del HUD y la localización de los textos.
+    
+- [[Level & Scene Loading]]: arranque, transiciones de escena, definiciones de nivel y los pasos de ciclo de vida que levantan y cierran cada nivel.
+    
 - [[Quest System]]: seguimiento y progresión de misiones principales y secundarias.
     
 - [[Technical Sound Document]]: especificación técnica y artística del audio con FMOD.
     
 - Sin página todavía, aunque ya existen en el código:
-    - Equipamiento: AgentEquipment (Systems/Equipment).
-    - UI: presentadores MVP sobre UI Toolkit (Systems/UI, Engine/UI).
+    - Comandos y depuración: la consola de comandos (Core/Commands, Systems/Commands) y las herramientas de Systems/Debugging.
+    - Diálogo: la integración de Articy (Engine/Narrative); el DialogueService ya se describe en [[Action System]].
+    - Cámara y entrada: Core/Camera, Systems/Camera, Core/Input, Engine/Unity/Camera y Engine/Unity/Input.
     
 
 TODO: Un diagrama de arquitectura debe acompañar esta sección.
@@ -551,7 +558,7 @@ La gestión de assets y escenas utilizará el sistema Addressables de Unity. Add
 
 La agrupación de assets, la estrategia de carga y cómo Addressables interactúa con la carga de niveles y el streaming del terreno del Sistema de Áreas están aún por detallar.
 
-Hoy Addressables (2.9.1) solo sirve las tablas de Localization: las escenas se cargan por nombre con SceneManager desde la lista de escenas de la build, y los prefabs se resuelven por PrefabId a través de PrefabRegistryDefinition.
+Hoy Addressables (2.9.1) solo sirve las tablas de Localization: las escenas se cargan por nombre con SceneManager desde la lista de escenas de la build, y los prefabs se resuelven por PrefabId a través de PrefabRegistryDefinition. Cómo se cargan hoy las escenas y los niveles se describe en [[Level & Scene Loading]].
 
 ## 3.4 Inteligencia Artificial
 
