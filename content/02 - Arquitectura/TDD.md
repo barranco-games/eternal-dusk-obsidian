@@ -333,12 +333,17 @@ La especificación técnica detallada de cada sistema se mantiene en el capítul
     
 - [[Status Effects System]]: estados con una ranura por tipo, compuestos de comportamientos definidos en datos, que se descuentan al inicio del turno de su portador.
     
+- [[Encounter System]]: encuentros definidos como fases en orden (diálogo, exploración, unión al grupo, combate) y el modo de juego que entra y sale del combate.
+    
+- [[Party System]]: los agentes que controla el jugador y su líder, cómo se unen, la vista compartida y la regla de hostilidad.
+    
+- [[Enemy AI]]: planificación del turno enemigo por búsqueda sobre estados simulados, objetivos por agente y conocimiento compartido del grupo dentro de un encuentro.
+    
 - [[Quest System]]: seguimiento y progresión de misiones principales y secundarias.
     
 - [[Technical Sound Document]]: especificación técnica y artística del audio con FMOD.
     
 - Sin página todavía, aunque ya existen en el código:
-    - IA enemiga: planificación del turno en Systems/AI (véase la sección 3.4).
     - Equipamiento: AgentEquipment (Systems/Equipment).
     - UI: presentadores MVP sobre UI Toolkit (Systems/UI, Engine/UI).
     
@@ -552,11 +557,13 @@ Hoy Addressables (2.9.1) solo sirve las tablas de Localization: las escenas se c
 
 La IA más exigente se ejecuta durante el combate, que es por turnos; fuera del combate, el comportamiento del agente es comparativamente ligero. Vive sin dependencias del motor en Systems/AI, detrás de AIService (ITurnPlanSource), y AITurnController ejecuta cada paso del plan con los mismos MovementService y SkillService que usa el jugador. En lugar de calcular durante el turno del jugador, el coste se reparte. Al empezar un encuentro, PrepareEncounter llena un pool de estados simulados (128, a 32 por fotograma) y el primer turno de combate espera a que esté listo. En el turno de la IA, la búsqueda devuelve el fotograma cada vez que una porción gasta TurnPlanner.SliceBudget (1 ms), de modo que un combate grande cuesta más fotogramas, no fotogramas más largos.
 
-El planificador no es GOAP sino una búsqueda en haz best-first sobre estados del mundo simulados (TurnPlanner). Expande el nodo más prometedor, pide acciones candidatas a los proveedores de movimiento y de habilidades, y conserva las mejores ramas (MaxBranches = 6) hasta una profundidad de 8 y 512 expansiones como máximo. Devuelve como plan del turno el camino de mayor puntuación, o ninguno si nada mejora quedarse quieto. Cada paso se puntúa con términos de daño infligido, salud propia, estados aplicados, penalización por muerte, movimiento, consumibles y logro del objetivo. El daño simulado es un valor esperado y nunca se tira, así que un plan es determinista.
+El planificador no es GOAP sino una búsqueda en haz best-first sobre estados del mundo simulados (TurnPlanner). Expande el nodo más prometedor, pide acciones candidatas a los proveedores de movimiento y de habilidades, y conserva las mejores ramas (MaxBranches = 6) hasta una profundidad de 8 y 512 expansiones como máximo. Devuelve como plan del turno el camino de mayor puntuación, o ninguno si nada mejora quedarse quieto. Cada paso se puntúa con términos de daño infligido, salud propia, estados aplicados, penalización por muerte, movimiento, consumibles y logro del objetivo. El daño simulado es un valor esperado, ponderado por la probabilidad de impacto, y nunca se tira, así que un plan es determinista.
 
 El planificador encaja con la arquitectura existente. Cada rama trabaja sobre su propia copia de un estado del pool (SimulatedWorldState, SimulatedAgentState, SimulationStatePool), con los recursos guardados como snapshots de valor ResourceState del sistema de Recursos (sección 2.6). Así evalúa acciones hipotéticas sin mutar el estado del juego en vivo y solo asigna cuando el pool se queda corto, como pide el objetivo de simulación segura para IA de la sección 2.2.
 
-Los objetivos se editan por agente en AgentDefinitionSO como AIGoalData (prioridad y un multiplicador por término de puntuación). GoalSelector juega el de mayor prioridad disponible; sin objetivos editados, el agente juega KillTarget, que hoy es el único AIGoalKind. Para el grupo, es hostil cualquier IAgent que no esté en él y no sea neutral (PartyService.AreHostile), y los enemigos de un encuentro comparten lo que ven del grupo hasta que acaba. Quedan por diseñar más tipos de objetivo, las facciones, el disparador de aggro fuera de los encuentros guionizados y que los planes tengan en cuenta la probabilidad de impacto.
+Los objetivos se editan por agente en AgentDefinitionSO como AIGoalData (prioridad y un multiplicador por término de puntuación). GoalSelector juega el de mayor prioridad disponible; sin objetivos editados, el agente juega KillTarget, que hoy es el único AIGoalKind. Para el grupo, es hostil cualquier IEntity que no esté en él y no sea neutral (PartyServiceExtensions.AreHostile), y los enemigos de un encuentro comparten lo que ven del grupo hasta que acaba. Quedan por diseñar más tipos de objetivo, las facciones y el disparador de aggro fuera de los encuentros guionizados.
+
+La especificación completa está en [[Enemy AI]].
 
 # 4. Referencias
 
