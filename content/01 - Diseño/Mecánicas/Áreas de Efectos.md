@@ -1,8 +1,8 @@
-- **Fuego:** Aplicará [[Estados#^quemado\|Quemado]] por 2 turnos a las entidades que entren al área a no ser que superen una [[Dados#Tiradas de Estadísticas\|Tirada de Constitución]]. ^fuego
-- **Humo:** Todas las entidades que se encuentren en el área serán [[Estados#^ceguera\|Cegados]] pero se considerarán [[Estados#^oculto\|Ocultos]]. ^humo
-- **Abrojos:** Los objetivos que pasen por el área tendrán que superar una [[Dados#Tiradas de Estadísticas|Tirada de Constitución]] por metro avanzado o recibirá un stack de [[Estados#^san|Sangrado]] durante dos [[Turnos]]. ^abrojos
+- **Fuego:** Aplica [[Estados#^sts-burning|Quemado]] 2 [[Turnos|turnos]] a quien entre en el área, salvo tirada de [[Estadísticas de Agentes#Constitución|Constitución]]. ^aoe-fire
+- **Humo:** Quien esté en el área queda Cegado, pero también [[Estados#^sts-hidden|Oculto]]. ^aoe-smoke
+- **Abrojos:** [[Dados#Tiradas de Estadísticas|Tirada]] de [[Estadísticas de Agentes#Constitución|Constitución]] por metro avanzado o un stack de [[Estados#^sts-bleeding|Sangrado]] durante 2 [[Turnos|turnos]]. ^aoe-caltrops
+- **Reactivo:** Los enemigos que entren en el área deberá pasar una [[Dados#Tiradas de Estadísticas|Tirada]] de [[Estadísticas de Agentes#Constitución|Constitución]] o serán [[Estados#^sts-slowed|Ralentizados]]. ^aoe-reactive
 
-Ejemplo: [Áreas Divinity 2](https://divinityoriginalsin2.wiki.fextralife.com/Environmental+Effects)
 1. Fuego
 2. Oro líquido
 3. Agua
@@ -18,3 +18,4 @@ Ejemplo: [Áreas Divinity 2](https://divinityoriginalsin2.wiki.fextralife.com/En
 13. Nube de Veneno
 14. Nube de Oro
 15. Nube de Bichos
+Ejemplo: [Áreas Divinity 2](https://divinityoriginalsin2.wiki.fextralife.com/Environmental+Effects)

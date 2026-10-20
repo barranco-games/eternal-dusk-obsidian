@@ -1,8 +1,8 @@
 # **Principales**
 ## Constitución
-Influye en la vida máxima de la entidad y en su resistencia a ser afectado por estados como [[Estados#^veneno|veneno]] o [[Estados#^quemado|quemado]].
+Influye en la vida máxima de la entidad y en su resistencia a ser afectado por estados como [[Estados#^sts-poisoned|veneno]] o [[Estados#^sts-burning|quemado]].
 ## Fuerza
-Influye en su eficacia usando armas pesadas (escopeta, almádena...), y su resistencia a ser afectado por estados como [[Estados#^derribado|derribado]].
+Influye en su eficacia usando armas pesadas (escopeta, almádena...), y su resistencia a ser afectado por estados como [[Estados#^sts-knocked-down|derribado]].
 ## Destreza
 Establece la posición en el orden de turno, influye en su eficacia usando armas precisas (rifle), y su habilidad de [[Estadísticas de Agentes#Evasión|Evasión]].
 ## Poder

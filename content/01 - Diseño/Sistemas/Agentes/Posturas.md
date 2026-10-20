@@ -1,6 +1,6 @@
 # Correr
-- El agente tiene más rango de [[Estadísticas de Agentes#Movimiento|Movimiento]] por [[Estadísticas de Agentes#Puntos de Acciones|PA]] gastado y más [[Estadísticas de Agentes#Evasión|Evasión]] pero le baja el acierto de algunas habilidades y no puede usar el [[Inventario]]. Hace más ruido.
+- Más movimiento por [[Estadísticas de Agentes#Puntos de Acciones|PA]] y más [[Estadísticas de Agentes#Evasión|Evasión]]; menos acierto en algunas habilidades, no puede usar el [[Inventario|inventario]] y hace más ruido.
 # Normal
-- No obtiene beneficios ni desventajas. Hace ruido al moverse.
+- Sin beneficios ni [[Dados#Ventaja y Desventaja|desventajas]]. Hace ruido al moverse.
 # Agachado
--  El efecto de cobertura parcial pasará a ser completa y obtendrá los estados de [[Estados#^ralentizado|Ralentizado]] y [[Estados#^oculto|Oculto]]. Algunas armas tiene más tasa de acierto. El ruido que hace al moverse será muy reducido.
+- La cobertura parcial pasa a completa; obtiene [[Estados#^sts-slowed|Ralentizado]] y [[Estados#^sts-hidden|Oculto]]. Algunas armas aciertan más. Ruido muy reducido.

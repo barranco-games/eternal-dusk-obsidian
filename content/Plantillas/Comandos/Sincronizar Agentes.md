@@ -1,0 +1,1 @@
+<%* const sync = tp.user["sync-agents"]; if (typeof sync !== "function") { new tp.obsidian.Notice("No se ha cargado sync-agents.js. Revisa en Templater que 'Script files folder location' apunte a su carpeta y abre la consola (Ctrl+Mayús+I) para ver el error.", 15000); } else { await sync(tp); } -%>

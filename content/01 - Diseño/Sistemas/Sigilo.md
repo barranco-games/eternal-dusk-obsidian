@@ -4,7 +4,7 @@ Un agente puede entrar en sigilo al [[Habilidades de Agentes#Habilidades General
 ## Visión
 La visibilidad de los enemigos se indicará a los jugadores y se dividirá en 3 áreas:
 - **Verde:** puede pasar en [[Estadísticas de Agentes#^sigilo|Sigilo]] sin necesidad de [[Dados#Tiradas de Estadísticas|Tirada]]. Si no está en [[Estadísticas de Agentes#^sigilo|Sigilo]] será descubierto automáticamente. 
-- **Amarillo:** necesitará hacer una [[Dados#Tiradas de Estadísticas|Tirada]] de [[Estadísticas de Agentes#^sigilo|Sigilo]] disputada contra el [[Estadísticas de Agentes#^descubrir|Descubrimiento]] del enemigo la primera vez que entre en su rango, si el enemigo no la supera no le detectará y no perderá el estado de [[Estados#^oculto|Oculto]].
+- **Amarillo:** necesitará hacer una [[Dados#Tiradas de Estadísticas|Tirada]] de [[Estadísticas de Agentes#^sigilo|Sigilo]] disputada contra el [[Estadísticas de Agentes#^descubrir|Descubrimiento]] del enemigo la primera vez que entre en su rango, si el enemigo no la supera no le detectará y no perderá el estado de [[Estados#^sts-hidden|Oculto]].
 - **Rojo:** El enemigo le detectará automáticamente.
 
 El rango de las áreas variará dependiendo del [[Estadísticas de Agentes#^sigilo|Sigilo]] del Agente y el [[Estadísticas de Agentes#^descubrir|Descubrimiento]] del enemigo. Cuanto mayor sea la diferencia entre estas, a favor del [[Estadísticas de Agentes#^sigilo|Sigilo]] del Agente, menor [[Sigilo#Rango de Detección|Rango de Detección]] tendrá el enemigo.
