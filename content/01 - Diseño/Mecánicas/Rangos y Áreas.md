@@ -1,6 +1,6 @@
 # Rangos
 Cada habilidad tendrá su rango de acción correspondiente en función del la distancia de la entidad al objetivo. 
-Cada habilidad tiene un único rango máximo y no se puede usar más lejos. Usarla más cerca no tiene penalización: la cercanía sube la [[Armas#^tasa-acierto|Tasa de Acierto]] hasta 10 puntos. Algunas habilidades tienen además un rango mínimo, por debajo del cual no se pueden usar.
+Cada habilidad tiene un único rango máximo y no se puede usar más lejos. Algunas habilidades tienen además un rango mínimo, por debajo del cual no se pueden usar.
 ## Melee
 El rango Melee indicará que la habilidad solo se puede usar contra entidades a 2,5 metros o menos, aunque en casos concretos el rango Melee podrá estar modificado.
 # Áreas de Daño

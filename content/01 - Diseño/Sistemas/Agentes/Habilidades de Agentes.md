@@ -31,4 +31,4 @@ Disparar es una acción general que podrá hacer cualquier agente. Cuando dispar
 
 - **Visibilidad.** Solo podrás seleccionar un enemigo para dispararle si está visible para ti, eso implica que esté dentro del rango de visión de las entidades.
 - **Alcance del arma.** Solo podrás disparar a un enemigo si está dentro del [[Rangos y Áreas#Rangos|Rango]] de tu arma.
-- **Porcentaje de disparo.** Al disparar se lanzarán los dados, la tirada necesaria a superar será la [[Armas#^tasa-acierto|Tasa de Acierto]], que depende de la [[Estadísticas de Agentes#Evasión|Evasión]] del enemigo y de lo cerca que esté.
+- **Porcentaje de disparo.** Al disparar se lanzarán los dados, la tirada necesaria a superar dependerá del [[Rangos y Áreas#Rangos|Rango]] al que estés de un enemigo y la habilidad con armas de la entidad.
