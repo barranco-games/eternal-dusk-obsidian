@@ -21,9 +21,14 @@ El agente puede moverse varias veces en su turno, es decir, el agente puede move
 
 La cantidad de unidades que puede avanzar el agente en su turno depende tanto de su [[Estadísticas de Agentes#Movimiento|Movimiento]] como de cuantos [[Estadísticas de Agentes#Puntos de Acciones|Puntos de Acción]] decida usar en su movimiento. Los agentes no se podrán mover a espacios que estén ocupadas por algún otro elemento, ya sea otra agente, un prop del escenario...
 
+Fuera de combate moverse no gasta [[Estadísticas de Agentes#Puntos de Acciones|PA]] ni tiene límite de distancia.
+
+# **Lanzar habilidades**
+Una habilidad solo se puede cancelar mientras se apunta. Una vez lanzada se ejecuta hasta el final.
+
 # **Disparar**
 Disparar es una acción general que podrá hacer cualquier agente. Cuando dispare se tendrán en cuenta varias cosas:
 
 - **Visibilidad.** Solo podrás seleccionar un enemigo para dispararle si está visible para ti, eso implica que esté dentro del rango de visión de las entidades.
 - **Alcance del arma.** Solo podrás disparar a un enemigo si está dentro del [[Rangos y Áreas#Rangos|Rango]] de tu arma.
-- **Porcentaje de disparo.** Al disparar se lanzarán los dados, la tirada necesaria a superar dependerá del [[Rangos y Áreas#Rangos|Rango]] al que estés de un enemigo y la habilidad con armas de la entidad.
+- **Porcentaje de disparo.** Al disparar se lanzarán los dados, la tirada necesaria a superar será la [[Armas#^tasa-acierto|Tasa de Acierto]], que depende de la [[Estadísticas de Agentes#Evasión|Evasión]] del enemigo y de lo cerca que esté.

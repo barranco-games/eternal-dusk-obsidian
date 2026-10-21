@@ -1,4 +1,4 @@
-Los estados se aplican a una entidad y su duración se reduce al principio de cada turno de dicha entidad.
+Los estados se aplican a una entidad y su duración se reduce al principio de cada turno de dicha entidad. Volver a aplicar un estado activo que no sea acumulable no suma duración: se queda con la más larga. Al morir, una entidad pierde todos sus estados y no puede recibir nuevos.
 
 # Infligidos
 - **Derribado:** Gasta 1 [[Estadísticas de Agentes#Puntos de Acciones|PA]] para levantarse. Ataques [[Rangos y Áreas#Melee|Melee]] contra el agente tienen [[Dados#Ventaja y Desventaja|Ventaja]], pero a distancia tienen [[Dados#Ventaja y Desventaja|Desventaja]]. No puede moverse. ^sts-knocked-down
