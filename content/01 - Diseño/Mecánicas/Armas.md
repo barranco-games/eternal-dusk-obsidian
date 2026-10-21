@@ -14,9 +14,9 @@ Las armas afectarán directamente a la habilidad de disparo de la entidad tienen
 - **Tirada de Fallo**: Es el resultado de la [[Dados#Tiradas de Estadísticas|Tirada]] hará que el arma se pueda encasquillar, teniendo que gastar [[Estadísticas de Agentes#Puntos de Acciones|PA]] para desencasquillarla. Esto solo se aplica a las armas de fuego. ^tirada-fallo
 - **Manejo:** Indica si el arma se puede usar con una o dos manos. ^manos
 # Bonificadores de Daño (BD)
-La bonificación de daño depende del tipo de daño de la habilidad: el contundente usa la [[Estadísticas de Agentes#Fuerza|Fuerza]] del agente y el perforante su [[Estadísticas de Agentes#Destreza|Destreza]]. El resto de tipos no tiene BD. Solo la suman las habilidades que la indican en su daño, por ejemplo 2D8 + BD.
+La bonificación de daño se calcula según el **[[Armas#^armas-tipo|Tipo]]** del arma.
 
-| **Estadística** | **BD** |
+| **Tipo** | **BD** |
 | :------: | :----: |
 |   1-20   |   -2   |
 |  21-45   |   -1   |

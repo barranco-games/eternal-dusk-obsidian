@@ -20,7 +20,7 @@ Es la cantidad de daño que un agente podrá aguantar antes de morir. Cada agent
 ## Cordura
 La cordura representa el estado mental del agente, es un recurso que se podrá usar para pagar el coste de algunas habilidades, el máximo es 100 puntos. La cordura inicial y máxima por agente es igual a su [[Estadísticas de Agentes#Poder|Poder]]. 
 ## Evasión
-Permite al agente esquivar golpes o ataques que vea contra él. Se calcula como 5 + [[Estadísticas de Agentes#Destreza|Destreza]]/10, redondeado hacia arriba.
+Permite al agente esquivar golpes o ataques que vea contra el. Se calcula como la mitad de la [[Estadísticas de Agentes#Destreza|Destreza]] redondeada hacia arriba.
 ## Movimiento
 Es la distancia máxima que un agente se moverá al gastar un [[Estadísticas de Agentes#Puntos de Acciones|Punto de Acción]]. Cada agente tiene un movimiento base, normalmente de 2 metros, y una bonificación de:
 
@@ -29,8 +29,8 @@ Es la distancia máxima que un agente se moverá al gastar un [[Estadísticas de
 | Si la DES o la FUE son igual o mayores que CON o las tres son iguales | 2 metros |
 | Si ambas DES y FUE son mayores que CON                                | 3 metros |
 ## Puntos de Acciones
-Es un recurso que los agentes usarán para realizar habilidades. Cada agente tiene una base propia de puntos de acción y una bonificación que variará en función de sus estadísticas principales.
-Al inicio de cada [[Turnos|Turno]] el agente recupera todos sus Puntos de Acción hasta el máximo, y los que no gastó en el turno anterior se pierden.
+Es un recurso que los agentes usarán para realizar habilidades. El máximo que un agente puede acumular es 10. Cada agente tiene una base propia de puntos de acción y una bonificación que variará en función de sus estadísticas principales.
+La recuperación de Puntos de Acción por [[Turnos|Turno]] será igual a sus iniciales.
 
 ### Bonificador:
 
