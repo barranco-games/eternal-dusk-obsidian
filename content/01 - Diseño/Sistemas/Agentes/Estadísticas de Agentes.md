@@ -22,14 +22,14 @@ La cordura representa el estado mental del agente, es un recurso que se podrá u
 ## Evasión
 Permite al agente esquivar golpes o ataques que vea contra el. Se calcula como la mitad de la [[Estadísticas de Agentes#Destreza|Destreza]] redondeada hacia arriba.
 ## Movimiento
-Es la distancia máxima que un agente se moverá al gastar un [[Estadísticas de Agentes#Puntos de Acciones|Punto de Acción]]. El movimiento base será de 2 metros y tendrá una bonificación de:
+Es la distancia máxima que un agente se moverá al gastar un [[Estadísticas de Agentes#Puntos de Acciones|Punto de Acción]]. Cada agente tiene un movimiento base, normalmente de 2 metros, y una bonificación de:
 
 | Si la DES y la FUE son menores que CON                                | 1 metros |
 | --------------------------------------------------------------------- | -------- |
 | Si la DES o la FUE son igual o mayores que CON o las tres son iguales | 2 metros |
 | Si ambas DES y FUE son mayores que CON                                | 3 metros |
 ## Puntos de Acciones
-Es un recurso que los agentes usarán para realizar habilidades. El máximo que un agente puede acumular es 10. Los puntos de acción iniciales de un agente son 4 y tendrá una bonificación que variará en función de sus estadísticas principales.
+Es un recurso que los agentes usarán para realizar habilidades. El máximo que un agente puede acumular es 10. Cada agente tiene una base propia de puntos de acción y una bonificación que variará en función de sus estadísticas principales.
 La recuperación de Puntos de Acción por [[Turnos|Turno]] será igual a sus iniciales.
 
 ### Bonificador:
@@ -41,6 +41,8 @@ La recuperación de Puntos de Acción por [[Turnos|Turno]] será igual a sus ini
 | 85–124    | 2        |
 | 125–164   | 3        |
 | 165–200   | 4        |
+## Rango de visión
+Es la distancia a la que un agente ve a otras entidades. Los miembros de la [[Party]] ven hasta 13 metros y los enemigos hasta 10 metros.
 
 # **Características**
 
@@ -55,6 +57,19 @@ La recuperación de Puntos de Acción por [[Turnos|Turno]] será igual a sus ini
 - **Intimidar** ^intimidar
 - **Persuadir** ^persuadir
 - **Engaño** ^enganio
+
+El valor de cada característica se calcula a partir de las estadísticas principales, redondeando hacia abajo. Rastrear, Persuadir y Engaño todavía no tienen fórmula.
+
+| **Característica** | **Fórmula**          |
+| ------------------ | -------------------- |
+| Descubrir          | 25 + COG/2           |
+| Sigilo             | 20 + DES/2           |
+| Ocultismo          | 5 + POD/2            |
+| Lanzar             | 20 + FUE/2           |
+| Intimidar          | 15 + (FUE + POD)/4   |
+| Subterfugio        | 15 + (DES + COG)/4   |
+| Perspicacia        | 5 + (POD + COG)/4    |
+| Medicina           | 10 + (DES + POD)/4   |
 
 ### Bonificador de Medicina
 Se añadirá un valor fijo a las tiradas relacionadas con medicamentos en función de la [[Estadísticas de Agentes#^medicina|Medicina]] del agente.
